@@ -74,7 +74,9 @@ usms-analytics/
 - Python 3.8 or higher
 - npm or yarn
 
-### Frontend Setup
+### Local Development
+
+#### Frontend Setup
 
 1. Navigate to the frontend directory:
    ```bash
@@ -93,7 +95,7 @@ usms-analytics/
 
 The frontend will be available at `http://localhost:5173`
 
-### Backend Setup
+#### Backend Setup
 
 1. Navigate to the backend directory:
    ```bash
@@ -117,6 +119,18 @@ The frontend will be available at `http://localhost:5173`
    ```
 
 The backend API will be available at `http://localhost:5000`
+
+### Vercel Deployment
+
+For production deployment on Vercel, see the dedicated deployment guide:
+
+- **[Vercel Deployment Guide](./VERCEL_DEPLOYMENT.md)** - Detailed deployment instructions
+- **[Vercel README](./README_VERCEL.md)** - Quick reference for Vercel deployment
+
+#### Quick Deploy
+```bash
+./deploy-vercel.sh
+```
 
 ## Usage
 

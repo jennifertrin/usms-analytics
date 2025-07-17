@@ -13,6 +13,9 @@ class Config:
     HOST = os.environ.get('HOST', '0.0.0.0')
     PORT = int(os.environ.get('PORT', 5000))
     
+    # Vercel settings
+    IS_VERCEL = os.environ.get('VERCEL', 'false').lower() == 'true'
+    
     # CORS settings
     CORS_SUPPORTS_CREDENTIALS = True
     

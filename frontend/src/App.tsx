@@ -7,6 +7,9 @@ import axios from 'axios'
 // Configure axios to include credentials for session management
 axios.defaults.withCredentials = true
 
+// API base URL from environment variables
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
+
 interface UserSession {
   user_id: string
   has_data: boolean
@@ -22,12 +25,12 @@ function App() {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/session')
+        const response = await axios.get(`${API_BASE_URL}/api/session`)
         setUserSession(response.data)
         
         // If user has data, fetch it
         if (response.data.has_data) {
-          const dataResponse = await axios.get('http://localhost:5000/api/data')
+          const dataResponse = await axios.get(`${API_BASE_URL}/api/data`)
           setAnalysisData(dataResponse.data)
         }
       } catch (error) {
@@ -52,7 +55,7 @@ function App() {
 
   const handleClearSession = async () => {
     try {
-      await axios.delete('http://localhost:5000/api/session')
+      await axios.delete(`${API_BASE_URL}/api/session`)
       setAnalysisData(null)
       setUserSession(null)
     } catch (error) {
