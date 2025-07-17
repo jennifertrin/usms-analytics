@@ -15,8 +15,8 @@
     "start": "cd server && source venv/bin/activate && python app.py",
     "test": "cd server && source venv/bin/activate && python run_tests.py",
     "clean:python": "cd server && rm -rf venv",
-    "build": "npm install @rollup/rollup-linux-x64-gnu && tsc -b && vite build",
-    "vercel-build": "npm install @rollup/rollup-linux-x64-gnu && tsc -b && vite build"
+    "build": "cd client && npm run build",
+    "vercel-build": "cd client && npm run build"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
@@ -24,7 +24,6 @@
   "engines": {
     "node": "18.x",
     "npm": ">=8.0.0",
-    "python": ">=3.8.0",
-    "@rollup/rollup-linux-x64-gnu": "^4.0.0"
+    "python": ">=3.8.0"
   }
 }

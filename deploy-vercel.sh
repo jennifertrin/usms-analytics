@@ -23,7 +23,7 @@ fi
 if [ ! -d "client/node_modules" ]; then
     echo "📦 Installing client dependencies..."
     cd client
-    npm install
+    npm install --legacy-peer-deps
     cd ..
 fi
 
