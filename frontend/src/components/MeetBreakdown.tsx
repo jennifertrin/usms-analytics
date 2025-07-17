@@ -11,8 +11,6 @@ const MeetBreakdown = ({ analysisData }: MeetBreakdownProps) => {
   // Use real data from analysisData
   const meetBreakdown = analysisData?.meetBreakdown || {}
   const meetResults = meetBreakdown?.currentMeet?.results || []
-  const allTimeImprovements = meetBreakdown?.allTimeImprovements || []
-  const ageGroupImprovements = meetBreakdown?.ageGroupImprovements || {}
 
   // Group results by meet (for now, using the current meet data structure)
   // In a real implementation, this would come from the backend with multiple meets

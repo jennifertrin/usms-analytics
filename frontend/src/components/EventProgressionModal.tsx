@@ -54,7 +54,7 @@ const EventProgressionModal = ({ isOpen, onClose, eventName, analysisData }: Eve
       }
 
       // Helper function to add unique time entry
-      const addTimeEntry = (time: string, date: string, meet: string, courseType?: string) => {
+      const addTimeEntry = (time: string, date: string, meet: string) => {
         if (!time || !date) return
         
         const timeSeconds = timeToSeconds(time)
@@ -110,7 +110,7 @@ const EventProgressionModal = ({ isOpen, onClose, eventName, analysisData }: Eve
             if (result.event === eventName) {
               // Only include if course type matches or if we don't have course type info
               if (!targetCourseType || !result.courseType || result.courseType === targetCourseType) {
-                addTimeEntry(result.time, meetDate, meetName, result.courseType)
+                addTimeEntry(result.time, meetDate, meetName)
               }
             }
           })
@@ -124,7 +124,7 @@ const EventProgressionModal = ({ isOpen, onClose, eventName, analysisData }: Eve
         
         meetResults.forEach((result: any) => {
           if (result.event === eventName) {
-            addTimeEntry(result.time, meetDate, meetName, result.courseType)
+            addTimeEntry(result.time, meetDate, meetName)
           }
         })
       }
@@ -138,8 +138,7 @@ const EventProgressionModal = ({ isOpen, onClose, eventName, analysisData }: Eve
               addTimeEntry(
                 historicalResult.time,
                 historicalResult.date,
-                historicalResult.meet || 'Historical Meet',
-                historicalResult.courseType
+                historicalResult.meet || 'Historical Meet'
               )
             }
           }
@@ -153,8 +152,7 @@ const EventProgressionModal = ({ isOpen, onClose, eventName, analysisData }: Eve
             addTimeEntry(
               best.time,
               best.date,
-              best.meet || 'Personal Best Meet',
-              best.courseType
+              best.meet || 'Personal Best Meet'
             )
           }
         }
@@ -170,8 +168,7 @@ const EventProgressionModal = ({ isOpen, onClose, eventName, analysisData }: Eve
               addTimeEntry(
                 ageGroupEvent.time,
                 ageGroupEvent.date,
-                `${ageGroup} - ${ageGroupEvent.meet || 'Age Group Meet'}`,
-                ageGroupEvent.courseType
+                `${ageGroup} - ${ageGroupEvent.meet || 'Age Group Meet'}`
               )
             }
           }
@@ -187,8 +184,7 @@ const EventProgressionModal = ({ isOpen, onClose, eventName, analysisData }: Eve
               addTimeEntry(
                 result.time,
                 result.date,
-                result.meet || 'Meet Result',
-                result.courseType
+                result.meet || 'Meet Result'
               )
             }
           }
@@ -208,7 +204,7 @@ const EventProgressionModal = ({ isOpen, onClose, eventName, analysisData }: Eve
                 // Use result's specific date if available, otherwise use meet date
                 const resultDate = result.date || meetDate
                 if (resultDate) {
-                  addTimeEntry(result.time, resultDate, meetName, result.courseType)
+                  addTimeEntry(result.time, resultDate, meetName)
                 }
               }
             }

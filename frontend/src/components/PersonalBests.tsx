@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import Plot from 'react-plotly.js'
 import EventProgressionModal from './EventProgressionModal'
 
 interface PersonalBestsProps {
@@ -61,23 +60,6 @@ const PersonalBests = ({ analysisData }: PersonalBestsProps) => {
   if (selectedCourseType !== 'all') {
     currentData = currentData.filter((item: any) => item.courseType === selectedCourseType)
   }
-
-  // Chart data for time progression - use formatted times for display
-  const timeProgressionData = [
-    {
-      x: currentData.map((item: any) => item.event),
-      y: currentData.map((item: any) => formatTimeForDisplay(item.time)),
-      type: 'bar' as const,
-      marker: { 
-        color: '#64748b',
-        opacity: 0.8
-      },
-      name: 'Best Times',
-      text: currentData.map((item: any) => formatTimeForDisplay(item.time)),
-      textposition: 'auto' as const,
-      textfont: { size: 10 }
-    }
-  ]
 
   const handleEventClick = (eventName: string) => {
     setSelectedEvent(eventName)
