@@ -49,3 +49,11 @@ data/
 README*.md
 *.md
 !README.md 
+
+!client/
+!client/package.json
+!client/src/
+!client/index.html
+!client/vite.config.ts
+!client/tsconfig.json
+!client/public/
