@@ -5,19 +5,12 @@
       "src": "client/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "client/dist",
-        "nodeVersion": "18.x",
-        "installCommand": "cd client && npm install --legacy-peer-deps --production=false",
-        "buildCommand": "cd client && npm run build:vercel"
+        "distDir": "client/dist"
       }
     },
     {
       "src": "api/*.py",
-      "use": "@vercel/python",
-      "config": {
-        "runtime": "python3.9",
-        "maxDuration": 30
-      }
+      "use": "@vercel/python"
     }
   ],
   "routes": [
@@ -26,8 +19,16 @@
       "dest": "/api/$1"
     },
     {
+      "src": "/assets/(.*)",
+      "dest": "/client/dist/assets/$1"
+    },
+    {
+      "src": "/vite.svg",
+      "dest": "/client/dist/vite.svg"
+    },
+    {
       "src": "/(.*)",
-      "dest": "/client/$1"
+      "dest": "/client/dist/index.html"
     }
   ]
 }
