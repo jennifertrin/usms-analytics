@@ -1,44 +1,45 @@
-# Vercel Deployment Guide
+# Vercel Deployment Guide (Restructured)
 
-This guide explains how to deploy the USMS Analytics application to Vercel.
+This guide explains how to deploy the restructured USMS Analytics application to Vercel.
 
 ## Overview
 
-The application has been restructured to work with Vercel's serverless architecture:
+The application has been restructured for simplified Vercel deployment:
 
-- **Frontend**: React + Vite application deployed as a static site
-- **Backend**: Python serverless functions for API endpoints
+- **Single Repository**: Both frontend and backend in one repository
+- **Root-level Configuration**: Single `vercel.json` handles both frontend and API
+- **Simplified Deployment**: One command deploys everything
+
+## Project Structure
+
+```
+usms-analytics/
+├── src/                 # React frontend source code
+├── public/              # Static assets
+├── api/                 # Python serverless functions
+├── services/            # Backend business logic
+├── models/              # Data models
+├── utils/               # Utility functions
+├── package.json         # Frontend dependencies and scripts
+├── vite.config.ts       # Vite configuration
+├── vercel.json          # Vercel configuration (handles both frontend and API)
+└── requirements-vercel.txt # Python dependencies
+```
 
 ## Deployment Steps
 
-### 1. Frontend Deployment
+### Quick Deploy
 
-1. **Navigate to the frontend directory:**
+1. **Run the deployment script:**
    ```bash
-   cd frontend
+   ./deploy.sh
    ```
 
-2. **Install dependencies:**
+### Manual Deployment
+
+1. **Install dependencies:**
    ```bash
    npm install
-   ```
-
-3. **Set environment variables:**
-   Create a `.env` file in the frontend directory:
-   ```
-   VITE_API_BASE_URL=https://your-backend-domain.vercel.app
-   ```
-
-4. **Deploy to Vercel:**
-   ```bash
-   vercel --prod
-   ```
-
-### 2. Backend Deployment
-
-1. **Navigate to the backend directory:**
-   ```bash
-   cd backend
    ```
 
 2. **Deploy to Vercel:**
@@ -49,6 +50,49 @@ The application has been restructured to work with Vercel's serverless architect
 3. **Set environment variables in Vercel dashboard:**
    - `SECRET_KEY`: A secure random string for session management
    - `VERCEL`: Set to `true`
+
+## Configuration
+
+### Vercel Configuration (vercel.json)
+
+The `vercel.json` file handles both frontend and backend:
+
+```json
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    },
+    {
+      "src": "api/*.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "outputDirectory": "dist"
+}
+```
+
+### Environment Variables
+
+Set these in your Vercel project dashboard:
+
+- `SECRET_KEY`: Secure random string for session management
+- `VERCEL`: Set to `true`
 
 ## API Endpoints
 
@@ -71,25 +115,22 @@ Since Vercel serverless functions are stateless, session management has been sim
 ### CORS Configuration
 CORS headers are set in each serverless function to allow cross-origin requests from the frontend.
 
-### Environment Variables
-Make sure to set the following environment variables in your Vercel project:
-- `VITE_API_BASE_URL` (frontend)
-- `SECRET_KEY` (backend)
-- `VERCEL` (backend)
+### Build Process
+- Frontend: Vite builds the React app to `dist/`
+- Backend: Python serverless functions are deployed from `api/`
 
 ## Local Development
 
-For local development, you can still use the original Flask setup:
+For local development, you can still use the original setup:
 
-1. **Start the backend:**
+1. **Start the backend (from backend directory):**
    ```bash
    cd backend
    python app.py
    ```
 
-2. **Start the frontend:**
+2. **Start the frontend (from root directory):**
    ```bash
-   cd frontend
    npm run dev
    ```
 
@@ -97,11 +138,13 @@ For local development, you can still use the original Flask setup:
 
 ### Common Issues
 
-1. **CORS Errors**: Make sure the frontend environment variable `VITE_API_BASE_URL` points to the correct backend URL.
+1. **Build Errors**: Make sure all dependencies are installed with `npm install`
 
-2. **Import Errors**: The serverless functions use relative imports. Make sure all required modules are available in the backend directory.
+2. **Import Errors**: The serverless functions use relative imports. Make sure all required modules are available.
 
-3. **Session Issues**: The serverless version doesn't maintain sessions between requests. Each analysis request is independent.
+3. **CORS Errors**: CORS is configured in each serverless function. No additional configuration needed.
+
+4. **Session Issues**: The serverless version doesn't maintain sessions between requests. Each analysis request is independent.
 
 ### Debugging
 
@@ -119,4 +162,20 @@ For local development, you can still use the original Flask setup:
 
 4. **Monitoring**: Set up monitoring and logging for production use.
 
-5. **Security**: Ensure all environment variables are properly secured. 
+5. **Security**: Ensure all environment variables are properly secured.
+
+## Migration from Previous Structure
+
+If you're migrating from the previous frontend/backend structure:
+
+1. **Backup your data** if needed
+2. **Update any custom configurations** to work with the new structure
+3. **Test the deployment** with the new structure
+4. **Update any CI/CD pipelines** to work with the new structure
+
+## Benefits of New Structure
+
+1. **Simplified Deployment**: One command deploys everything
+2. **Better Organization**: Clear separation of concerns
+3. **Easier Maintenance**: Single repository to manage
+4. **Reduced Complexity**: No need to manage multiple deployments 

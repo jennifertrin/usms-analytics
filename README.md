@@ -1,192 +1,188 @@
-# USMS Analytics Platform
+# USMS Analytics - Monorepo
 
-A comprehensive analytics platform for USMS (United States Masters Swimming) results analysis with advanced features for performance tracking, meet breakdowns, and club history.
+A comprehensive swimming performance analysis platform that scrapes USMS (United States Masters Swimming) results and provides detailed analytics and insights.
 
-## ✨ New Features
-
-### 🏆 Meet Breakdown
-- **Comprehensive Meet Analysis**: View detailed results with place and time improvements
-- **Age Group Toggle**: Switch between all-time improvements and age group-specific improvements
-- **Place Distribution**: Visual charts showing your placement distribution
-- **Time Improvements**: Track performance improvements across different events
-
-### ⭐ Personal Bests
-- **All-Time Records**: View your complete personal best history
-- **Age Group Breakdowns**: Filter personal bests by age groups (18-24, 25-29, 30-34, 35-39, 40-44, 45-49, 50-54, 55-59, 60-64, 65-69, 70-74, 75-79, 80+)
-- **Time Progression**: Visual charts showing your best times across events
-- **Recent Achievements**: Highlight your latest accomplishments
-
-### 🎨 Enhanced UI/UX
-- **Modern Design**: Beautiful gradient backgrounds and glass effects
-- **Responsive Layout**: Works perfectly on desktop, tablet, and mobile
-- **Interactive Elements**: Hover effects, smooth transitions, and engaging animations
-- **Improved Navigation**: Icon-based tab navigation with better organization
-
-## Features
-
-- **Real-time Data Analysis**: Paste USMS results links and get instant analytics
-- **Interactive Visualizations**: Beautiful charts and graphs using Plotly.js
-- **Performance Tracking**: Monitor your progress over time with detailed metrics
-- **Age Group Comparisons**: See how you stack up against your peers across all age groups
-- **Personalized Insights**: Get recommendations for improvement
-- **Modern UI**: Clean, responsive design with Tailwind CSS and advanced animations
-
-## Tech Stack
-
-### Frontend
-- **React 18** with TypeScript
-- **Vite** for fast development and building
-- **Tailwind CSS** for styling
-- **Plotly.js** for interactive visualizations
-- **React Router** for navigation
-- **Axios** for API calls
-
-### Backend
-- **Flask** (Python) for the API server
-- **Beautiful Soup** for web scraping
-- **Pandas** for data analysis
-- **Flask-CORS** for cross-origin requests
-
-## Project Structure
+## 🏗️ Monorepo Structure
 
 ```
 usms-analytics/
-├── frontend/                 # React frontend application
-│   ├── src/
-│   │   ├── components/      # React components
-│   │   │   ├── Header.tsx
-│   │   │   ├── HomePage.tsx
-│   │   │   └── Dashboard.tsx
-│   │   ├── App.tsx
-│   │   └── index.css
-│   ├── package.json
-│   └── tailwind.config.js
-├── backend/                  # Flask backend API
-│   ├── app.py               # Main Flask application
-│   └── requirements.txt     # Python dependencies
-└── README.md
+├── client/                 # React frontend application
+│   ├── src/               # React source code
+│   ├── public/            # Static assets
+│   ├── package.json       # Frontend dependencies
+│   └── vite.config.ts     # Vite configuration
+├── server/                # Python Flask backend
+│   ├── app.py            # Flask application entry point
+│   ├── routes/           # API route definitions
+│   ├── requirements.txt  # Python dependencies
+│   └── tests/           # Backend tests
+├── api/                  # Vercel serverless functions
+├── models/               # Shared data models
+├── services/             # Business logic services
+├── utils/                # Utility functions
+├── data/                 # Data storage
+└── package.json          # Root monorepo configuration
 ```
 
-## Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js (v16 or higher)
-- Python 3.8 or higher
-- npm or yarn
 
-### Local Development
+- Node.js >= 18.0.0
+- Python >= 3.8
+- npm >= 8.0.0
 
-#### Frontend Setup
+### Installation
 
-1. Navigate to the frontend directory:
+1. **Clone the repository**
    ```bash
-   cd frontend
+   git clone <repository-url>
+   cd usms-analytics
    ```
 
-2. Install dependencies:
+2. **Install all dependencies**
    ```bash
-   npm install
+   npm run install:all
    ```
 
-3. Start the development server:
+3. **Set up Python environment**
    ```bash
-   npm run dev
-   ```
-
-The frontend will be available at `http://localhost:5173`
-
-#### Backend Setup
-
-1. Navigate to the backend directory:
-   ```bash
-   cd backend
-   ```
-
-2. Create a virtual environment (recommended):
-   ```bash
+   cd server
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. Install dependencies:
-   ```bash
    pip install -r requirements.txt
+   cd ..
    ```
 
-4. Start the Flask server:
-   ```bash
-   python app.py
-   ```
+### Development
 
-The backend API will be available at `http://localhost:5000`
+**Start both frontend and backend in development mode:**
+```bash
+npm run dev
+```
+
+This will start:
+- Frontend: http://localhost:3000
+- Backend: http://localhost:5000
+
+**Start only the frontend:**
+```bash
+npm run dev:client
+```
+
+**Start only the backend:**
+```bash
+npm run dev:server
+```
+
+### Building
+
+**Build the frontend for production:**
+```bash
+npm run build
+```
+
+**Build only the frontend:**
+```bash
+npm run build:client
+```
+
+### Testing
+
+**Run backend tests:**
+```bash
+npm run test
+```
+
+## 📁 Project Structure Details
+
+### Client (Frontend)
+- **React 19** with TypeScript
+- **Vite** for fast development and building
+- **Tailwind CSS** for styling
+- **React Router** for navigation
+- **Plotly.js** for data visualization
+- **Axios** for API communication
+
+### Server (Backend)
+- **Flask** web framework
+- **Flask-CORS** for cross-origin requests
+- **Flask-Session** for session management
+- **BeautifulSoup4** for web scraping
+- **Pandas** for data manipulation
+- **NumPy** for numerical operations
+
+### Shared Components
+- **Models**: Data structures and type definitions
+- **Services**: Business logic for scraping and analysis
+- **Utils**: Helper functions for time and age calculations
+- **API**: Vercel serverless functions for deployment
+
+## 🔧 Configuration
+
+### Environment Variables
+
+Create a `.env` file in the root directory:
+
+```env
+# Flask Configuration
+SECRET_KEY=your-secret-key-change-in-production
+FLASK_DEBUG=True
+HOST=0.0.0.0
+PORT=5000
+
+# Vercel Configuration (for deployment)
+VERCEL=false
+```
+
+### API Configuration
+
+The application supports both local Flask development and Vercel serverless deployment. The API endpoints are automatically configured based on the environment.
+
+## 🚀 Deployment
 
 ### Vercel Deployment
 
-For production deployment on Vercel, see the dedicated deployment guide:
+The project is configured for Vercel deployment with both frontend and serverless functions:
 
-- **[Vercel Deployment Guide](./VERCEL_DEPLOYMENT.md)** - Detailed deployment instructions
-- **[Vercel README](./README_VERCEL.md)** - Quick reference for Vercel deployment
+1. **Frontend**: Deployed as a static site
+2. **API**: Deployed as serverless functions in the `/api` directory
 
-#### Quick Deploy
+### Local Production Build
+
 ```bash
-./deploy-vercel.sh
+# Build frontend
+npm run build
+
+# Start production server
+npm start
 ```
 
-## Usage
+## 🧪 Testing
 
-1. **Homepage**: Land on the homepage and paste your USMS results link
-2. **Analysis**: The app will scrape and analyze your data in real-time
-3. **Dashboard**: View your personalized analytics dashboard with comprehensive tabs:
+### Backend Tests
+```bash
+cd server
+python run_tests.py
+```
 
-### Dashboard Tabs
+### Frontend Tests
+```bash
+cd client
+npm run test
+```
 
-1. **📊 Overview**: Quick stats and summary information
-2. **📈 Performance**: Performance trends and analysis
-3. **🏆 Meet Breakdown**: Detailed meet results with improvements and age group toggles
-4. **⭐ Personal Bests**: All-time and age group personal records
-5. **📉 Trends**: Age group comparison and trend analysis
-7. **🎯 Comparisons**: Performance insights and recommendations
+## 📊 Features
 
-## API Endpoints
+- **USMS Results Scraping**: Automated scraping of swimming meet results
+- **Performance Analysis**: Detailed analysis of swimming performance
+- **Personal Bests Tracking**: Track and compare personal best times
+- **Age Group Analysis**: Performance analysis by age groups
+- **Meet Breakdown**: Detailed breakdown of individual meets
+- **Trend Analysis**: Performance trends over time
+- **Interactive Visualizations**: Charts and graphs for data visualization
 
-- `POST /api/analyze` - Analyze USMS results from a provided URL
-- `GET /api/health` - Health check endpoint
-- `GET /api/sample-data` - Get sample data for testing
-
-## Development
-
-### Frontend Development
-- The app uses Vite for fast hot module replacement
-- Tailwind CSS is configured with custom swimming-themed colors
-- Components are built with TypeScript for type safety
-
-### Backend Development
-- Flask app with CORS enabled for frontend communication
-- USMSAnalyzer class handles web scraping and data analysis
-- Mock data is provided for development and testing
-
-## Customization
-
-### Adding New Visualizations
-1. Create new Plotly charts in the Dashboard component
-2. Add new tabs to the dashboard navigation
-3. Update the data processing in the backend
-
-### Styling
-- Custom colors are defined in `tailwind.config.js`
-- Component classes are in `src/index.css`
-- Use the `swim-` color palette for swimming-themed styling
-
-## Future Enhancements
-
-- **User Accounts**: Save analysis history and preferences
-- **Advanced Analytics**: Machine learning for performance predictions
-- **Social Features**: Compare with friends and teammates
-- **Mobile App**: Native mobile application
-- **Export Features**: Download reports and data
-- **Integration**: Connect with training apps and devices
-
-## Contributing
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
@@ -194,14 +190,10 @@ For production deployment on Vercel, see the dedicated deployment guide:
 4. Add tests if applicable
 5. Submit a pull request
 
-## License
+## 📄 License
 
 This project is licensed under the MIT License.
 
-## Support
+## 🆘 Support
 
-For questions or support, please open an issue on the GitHub repository.
-
----
-
-**Note**: This is a demonstration application. The USMS web scraping functionality uses mock data. In a production environment, you would need to implement proper web scraping for actual USMS results pages and ensure compliance with USMS terms of service. 
+For support and questions, please open an issue in the repository. 

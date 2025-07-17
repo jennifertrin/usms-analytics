@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 Starting Vercel deployment for USMS Analytics..."
+echo "🚀 Starting Vercel deployment for USMS Analytics (Restructured)..."
 
 # Check if Vercel CLI is installed
 if ! command -v vercel &> /dev/null; then
@@ -13,21 +13,23 @@ fi
 echo "📦 Installing all dependencies..."
 npm run install:all
 
-# Deploy to Vercel (monorepo structure)
-echo "📦 Deploying to Vercel..."
+# Deploy to Vercel
+echo "🚀 Deploying to Vercel..."
 if vercel --prod --yes; then
     echo "✅ Deployment completed successfully!"
+    
     # Get the deployment URL
     DEPLOYMENT_URL=$(vercel ls | grep -o 'https://[^[:space:]]*' | head -1)
-    echo "🔗 Application URL: $DEPLOYMENT_URL"
+    echo "🌐 Application URL: $DEPLOYMENT_URL"
+    
+    echo ""
+    echo "📝 Next steps:"
+    echo "1. Set environment variables in Vercel dashboard:"
+    echo "   - SECRET_KEY: A secure random string"
+    echo "   - VERCEL: Set to 'true'"
+    echo "2. Test the application at: $DEPLOYMENT_URL"
+    echo "3. Configure custom domain if needed"
 else
     echo "❌ Deployment failed!"
     exit 1
-fi
-
-echo "🎉 Deployment completed successfully!"
-echo "🌐 Application: $DEPLOYMENT_URL"
-echo ""
-echo "📝 Don't forget to:"
-echo "1. Set environment variables in Vercel dashboard"
-echo "2. Test the application" 
+fi 

@@ -14,7 +14,7 @@ trap cleanup SIGINT SIGTERM
 
 # Start backend server
 echo "🐍 Starting Flask backend server..."
-cd backend
+cd server
 source venv/bin/activate
 python3 app.py &
 BACKEND_PID=$!
@@ -25,13 +25,13 @@ sleep 2
 
 # Start frontend server
 echo "⚛️  Starting React frontend server..."
-cd frontend
+cd client
 npm run dev &
 FRONTEND_PID=$!
 cd ..
 
 echo "✅ Servers started!"
-echo "📊 Frontend: http://localhost:5173"
+echo "📊 Frontend: http://localhost:3000"
 echo "🔧 Backend:  http://localhost:5000"
 echo ""
 echo "Press Ctrl+C to stop both servers"

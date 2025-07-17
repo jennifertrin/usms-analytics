@@ -1,0 +1,9 @@
+{
+  "ignore": [
+    "backend/**",
+    "node_modules/**",
+    "dist/**",
+    ".git/**",
+    "**/*.log"
+  ]
+} 
