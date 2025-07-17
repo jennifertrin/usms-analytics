@@ -6,8 +6,6 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "build:vercel": "npm install --legacy-peer-deps && tsc -b && vite build",
-    "vercel-build": "npm install --legacy-peer-deps && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -38,15 +36,15 @@
     "tailwindcss": "^4.1.11",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.35.1",
-    "vite": "^7.0.4"
+    "vite": "^6.1.0"
   },
   "overrides": {
-    "rollup": {
-      "optionalDependencies": {}
+    "optionalDependencies": {
+      "@rollup/rollup-linux-x64-gnu": "4.9.5"
     }
   },
   "engines": {
-    "node": "22.x",
+    "node": "22.0.0",
     "npm": ">=8.0.0"
   }
 }

@@ -1,20 +1,20 @@
 {
     "version": 2,
+    "installCommand": "echo skipping root install",
     "buildCommand": "npm run vercel-build",
     "outputDirectory": "client/dist",
-    "installCommand": "npm install",
     "functions": {
       "api/analyze.py": {
-        "runtime": "python3.9"
+        "runtime": "@vercel/python@3.1.7"
       },
       "api/data.py": {
-        "runtime": "python3.9"
+        "runtime": "@vercel/python@3.1.7"
       },
       "api/health.py": {
-        "runtime": "python3.9"
+        "runtime": "@vercel/python@3.1.7"
       },
       "api/session.py": {
-        "runtime": "python3.9"
+        "runtime": "@vercel/python@3.1.7"
       }
     },
     "rewrites": [
