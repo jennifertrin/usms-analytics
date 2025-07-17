@@ -2,6 +2,9 @@ import { useState } from 'react'
 import Dashboard from './Dashboard'
 import axios from 'axios'
 
+// API base URL from environment variables
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
+
 interface HomePageProps {
   analysisData: any
   userSession: any
@@ -31,7 +34,7 @@ const HomePage = ({ analysisData, userSession, onClearSession, setAnalysisData }
     setError('')
 
     try {
-      const response = await axios.post('http://localhost:5000/api/analyze', {
+      const response = await axios.post(`${API_BASE_URL}/api/analyze`, {
         usmsLink: usmsLink.trim()
       })
 
