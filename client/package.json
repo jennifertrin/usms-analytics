@@ -44,5 +44,9 @@
     "rollup": {
       "optionalDependencies": {}
     }
+  },
+  "engines": {
+    "node": "22.x",
+    "npm": ">=8.0.0"
   }
 }

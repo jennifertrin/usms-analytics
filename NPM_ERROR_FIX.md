@@ -34,7 +34,10 @@ Try using the minimal configuration:
   "builds": [
     {
       "src": "client/package.json",
-      "use": "@vercel/static-build"
+      "use": "@vercel/static-build",
+      "config": {
+        "nodeVersion": "22.x"
+      }
     },
     {
       "src": "api/*.py",

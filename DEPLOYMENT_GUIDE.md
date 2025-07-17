@@ -10,7 +10,7 @@ The 404 error occurs because Vercel doesn't understand how to serve the monorepo
 
 ### 1. Correct Vercel Configuration
 The `vercel.json` file now properly configures:
-- **Frontend**: Built from `client/package.json` → output to `client/dist`
+- **Frontend**: Built from `client/package.json` → output to `client/dist` (Node 22.x)
 - **API**: Python serverless functions in `api/` directory
 - **Routes**: Proper routing for API and static assets
 
