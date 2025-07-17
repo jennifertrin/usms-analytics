@@ -1,181 +1,222 @@
-# Vercel Deployment Guide (Restructured)
-
-This guide explains how to deploy the restructured USMS Analytics application to Vercel.
+# Vercel Deployment Guide
 
 ## Overview
 
-The application has been restructured for simplified Vercel deployment:
+This guide explains how to deploy the USMS Analytics application to Vercel, including the necessary optimizations for serverless architecture.
 
-- **Single Repository**: Both frontend and backend in one repository
-- **Root-level Configuration**: Single `vercel.json` handles both frontend and API
-- **Simplified Deployment**: One command deploys everything
+## Key Changes Made for Vercel
 
-## Project Structure
+### 1. Session Management
+**Problem**: Flask sessions with filesystem storage don't work on Vercel's serverless functions.
 
-```
-usms-analytics/
-├── src/                 # React frontend source code
-├── public/              # Static assets
-├── api/                 # Python serverless functions
-├── services/            # Backend business logic
-├── models/              # Data models
-├── utils/               # Utility functions
-├── package.json         # Frontend dependencies and scripts
-├── vite.config.ts       # Vite configuration
-├── vercel.json          # Vercel configuration (handles both frontend and API)
-└── requirements-vercel.txt # Python dependencies
-```
+**Solution**: Implemented header-based session management using `X-User-ID` headers.
+
+### 2. Build Configuration
+- Updated `vercel.json` to handle monorepo structure
+- Configured proper build paths for frontend and backend
+- Set function timeouts and runtime settings
+
+### 3. API Endpoints
+- All API endpoints now support `X-User-ID` header for session management
+- Removed Flask session dependencies
+- Updated CORS headers to include custom headers
 
 ## Deployment Steps
 
-### Quick Deploy
+### 1. Environment Setup
 
-1. **Run the deployment script:**
-   ```bash
-   ./deploy.sh
-   ```
+Create a `.env` file in the root directory:
+```bash
+SECRET_KEY=your-secret-key-here
+FLASK_DEBUG=false
+VERCEL=true
+```
 
-### Manual Deployment
+### 2. Install Vercel CLI
+```bash
+npm install -g vercel
+```
 
-1. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+### 3. Deploy to Vercel
+```bash
+# Login to Vercel
+vercel login
 
-2. **Deploy to Vercel:**
-   ```bash
-   vercel --prod
-   ```
+# Deploy
+vercel --prod
+```
 
-3. **Set environment variables in Vercel dashboard:**
-   - `SECRET_KEY`: A secure random string for session management
-   - `VERCEL`: Set to `true`
+### 4. Environment Variables
+Set these in your Vercel dashboard:
+- `SECRET_KEY`: Your application secret key
+- `FLASK_DEBUG`: Set to `false` for production
+- `VERCEL`: Set to `true`
 
-## Configuration
+## Session Management
 
-### Vercel Configuration (vercel.json)
+### How It Works
+1. Client calls `/api/session` to get a new user ID
+2. Client stores the user ID locally (localStorage, sessionStorage, etc.)
+3. Client includes `X-User-ID` header in all subsequent API calls
+4. Server uses the user ID to retrieve/store user data
 
-The `vercel.json` file handles both frontend and backend:
-
-```json
-{
-  "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
+### Client Implementation
+```javascript
+// Get or create session
+async function getSession() {
+  let userId = localStorage.getItem('userId');
+  
+  if (!userId) {
+    const response = await fetch('/api/session', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
       }
+    });
+    const data = await response.json();
+    userId = data.user_id;
+    localStorage.setItem('userId', userId);
+  }
+  
+  return userId;
+}
+
+// Make API calls with session
+async function analyzePerformance(usmsLink) {
+  const userId = await getSession();
+  
+  const response = await fetch('/api/analyze', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-User-ID': userId
     },
-    {
-      "src": "api/*.py",
-      "use": "@vercel/python"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
-  ],
-  "outputDirectory": "dist"
+    body: JSON.stringify({ usmsLink })
+  });
+  
+  return response.json();
 }
 ```
 
-### Environment Variables
+## Limitations and Considerations
 
-Set these in your Vercel project dashboard:
+### 1. Stateless Architecture
+- Each serverless function invocation is independent
+- No persistent memory between requests
+- User data is stored in-memory (will be lost on function restart)
 
-- `SECRET_KEY`: Secure random string for session management
-- `VERCEL`: Set to `true`
+### 2. Production Recommendations
+For production use, consider implementing:
+- **Redis**: For persistent session storage
+- **Database**: For user data persistence
+- **JWT Tokens**: For stateless authentication
 
-## API Endpoints
+### 3. Function Timeouts
+- Default timeout: 10 seconds
+- Maximum timeout: 30 seconds (configured in vercel.json)
+- Long-running operations may timeout
 
-The backend provides the following serverless functions:
+### 4. Cold Starts
+- First request to each function may be slower
+- Consider implementing warm-up strategies
 
-- `POST /api/analyze` - Analyze USMS results
-- `GET /api/session` - Get session information
-- `DELETE /api/session` - Clear session
-- `GET /api/data` - Get user data
-- `GET /api/health` - Health check
-
-## Important Notes
-
-### Session Management
-Since Vercel serverless functions are stateless, session management has been simplified:
-- Each request creates a new user session
-- Data is stored temporarily for the duration of the request
-- For production use, consider implementing a proper database for persistent storage
-
-### CORS Configuration
-CORS headers are set in each serverless function to allow cross-origin requests from the frontend.
-
-### Build Process
-- Frontend: Vite builds the React app to `dist/`
-- Backend: Python serverless functions are deployed from `api/`
-
-## Local Development
-
-For local development, you can still use the original setup:
-
-1. **Start the backend (from backend directory):**
-   ```bash
-   cd backend
-   python app.py
-   ```
-
-2. **Start the frontend (from root directory):**
-   ```bash
-   npm run dev
-   ```
+## File Structure
+```
+/
+├── api/                    # Vercel serverless functions
+│   ├── analyze.py         # Performance analysis
+│   ├── data.py           # Data retrieval
+│   ├── health.py         # Health check
+│   └── session.py        # Session management
+├── client/                # React frontend
+│   ├── src/
+│   ├── package.json
+│   └── vite.config.ts
+├── services/              # Business logic
+├── models/               # Data models
+├── utils/                # Utilities
+├── vercel.json          # Vercel configuration
+├── requirements-vercel.txt # Python dependencies
+└── README.md
+```
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Build Errors**: Make sure all dependencies are installed with `npm install`
+1. **Import Errors**
+   - Ensure all Python dependencies are in `requirements-vercel.txt`
+   - Check import paths in API functions
 
-2. **Import Errors**: The serverless functions use relative imports. Make sure all required modules are available.
+2. **CORS Errors**
+   - Verify CORS headers in API responses
+   - Check client-side request headers
 
-3. **CORS Errors**: CORS is configured in each serverless function. No additional configuration needed.
+3. **Session Issues**
+   - Ensure client sends `X-User-ID` header
+   - Check localStorage/sessionStorage implementation
 
-4. **Session Issues**: The serverless version doesn't maintain sessions between requests. Each analysis request is independent.
+4. **Build Failures**
+   - Verify `vercel.json` configuration
+   - Check build paths and dependencies
 
 ### Debugging
+- Use Vercel dashboard to view function logs
+- Check browser developer tools for client-side errors
+- Monitor function execution times and memory usage
 
-- Check Vercel function logs in the dashboard
-- Use the `/api/health` endpoint to verify the backend is running
-- Test API endpoints directly using tools like Postman or curl
+## Performance Optimization
 
-## Production Considerations
+1. **Bundle Size**
+   - Minimize Python dependencies
+   - Use tree-shaking for frontend
 
-1. **Database**: Consider implementing a proper database (e.g., PostgreSQL, MongoDB) for persistent data storage.
+2. **Function Optimization**
+   - Keep functions lightweight
+   - Avoid heavy computations in serverless functions
 
-2. **Caching**: Implement caching for frequently accessed data.
+3. **Caching**
+   - Implement client-side caching
+   - Consider CDN for static assets
 
-3. **Rate Limiting**: Add rate limiting to prevent abuse.
+## Security Considerations
 
-4. **Monitoring**: Set up monitoring and logging for production use.
+1. **Environment Variables**
+   - Never commit secrets to version control
+   - Use Vercel's environment variable system
 
-5. **Security**: Ensure all environment variables are properly secured.
+2. **Input Validation**
+   - Validate all user inputs
+   - Sanitize USMS links
 
-## Migration from Previous Structure
+3. **Rate Limiting**
+   - Consider implementing rate limiting
+   - Monitor API usage
 
-If you're migrating from the previous frontend/backend structure:
+## Monitoring
 
-1. **Backup your data** if needed
-2. **Update any custom configurations** to work with the new structure
-3. **Test the deployment** with the new structure
-4. **Update any CI/CD pipelines** to work with the new structure
+1. **Vercel Analytics**
+   - Monitor function performance
+   - Track error rates
 
-## Benefits of New Structure
+2. **Custom Logging**
+   - Add structured logging to API functions
+   - Monitor user session patterns
 
-1. **Simplified Deployment**: One command deploys everything
-2. **Better Organization**: Clear separation of concerns
-3. **Easier Maintenance**: Single repository to manage
-4. **Reduced Complexity**: No need to manage multiple deployments 
+## Future Improvements
+
+1. **Database Integration**
+   - Add persistent storage for user data
+   - Implement proper user management
+
+2. **Authentication**
+   - Add user authentication system
+   - Implement JWT tokens
+
+3. **Caching Layer**
+   - Add Redis for session storage
+   - Implement result caching
+
+4. **API Versioning**
+   - Implement API versioning strategy
+   - Add backward compatibility 

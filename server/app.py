@@ -2,7 +2,6 @@ import sys
 import os
 from flask import Flask
 from flask_cors import CORS
-from flask_session import Session
 
 # Add parent directory to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -16,10 +15,8 @@ def create_app():
     
     # Configure app
     app.secret_key = Config.SECRET_KEY
-    app.config['SESSION_TYPE'] = Config.SESSION_TYPE
     
-    # Initialize extensions
-    Session(app)
+    # Initialize extensions (removed Flask-Session for Vercel compatibility)
     CORS(app, supports_credentials=Config.CORS_SUPPORTS_CREDENTIALS)
     
     # Register blueprints

@@ -1,6 +1,6 @@
 import sys
 import os
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify
 from datetime import datetime
 from typing import Dict, Any
 
@@ -24,11 +24,11 @@ user_service = UserService()
 def analyze_usms_results():
     """Analyze USMS results from provided URL"""
     try:
-        # Initialize user session if not exists
-        if 'user_id' not in session:
-            session['user_id'] = user_service.create_user_session()
+        # Get user ID from headers (Vercel-compatible session management)
+        user_id = request.headers.get('X-User-ID')
+        if not user_id:
+            user_id = user_service.create_user_session()
         
-        user_id = session['user_id']
         data = request.get_json()
         usms_link = data.get('usmsLink')
         
@@ -73,42 +73,60 @@ def health_check():
 @api_bp.route('/session', methods=['GET'])
 def get_session():
     """Get current user session information"""
-    if 'user_id' not in session:
-        return jsonify({'error': 'No active session'}), 404
+    user_id = request.headers.get('X-User-ID')
     
-    user_id = session['user_id']
+    if not user_id:
+        return jsonify({'error': 'No user ID provided'}), 400
+    
     user_session = user_service.get_user_session_info(user_id)
     
     if not user_session:
-        return jsonify({'error': 'No data found for current session'}), 404
+        return jsonify({
+            'user_id': user_id,
+            'has_data': False,
+            'swimmer_name': None,
+            'new_session': False
+        })
     
     return jsonify({
         'user_id': user_session.user_id,
         'has_data': True,
-        'swimmer_name': user_session.swimmer_name
+        'swimmer_name': user_session.swimmer_name,
+        'new_session': False
+    })
+
+@api_bp.route('/session', methods=['POST'])
+def create_session():
+    """Create a new user session"""
+    user_id = user_service.create_user_session()
+    return jsonify({
+        'user_id': user_id,
+        'message': 'New session created successfully'
     })
 
 @api_bp.route('/session', methods=['DELETE'])
 def clear_session():
     """Clear current user session and data"""
-    if 'user_id' in session:
-        user_id = session['user_id']
-        user_service.clear_user_data(user_id)
-        session.pop('user_id', None)
+    user_id = request.headers.get('X-User-ID')
     
-    return jsonify({'message': 'Session cleared successfully'})
+    if user_id:
+        user_service.clear_user_data(user_id)
+        return jsonify({'message': 'Session cleared successfully'})
+    
+    return jsonify({'message': 'No session to clear'})
 
 @api_bp.route('/data', methods=['GET'])
 def get_user_data():
     """Get stored analysis data for current user"""
-    if 'user_id' not in session:
-        return jsonify({'error': 'No active session'}), 404
+    user_id = request.headers.get('X-User-ID')
     
-    user_id = session['user_id']
+    if not user_id:
+        return jsonify({'error': 'No user ID provided'}), 400
+    
     user_data = user_service.get_user_data(user_id)
     
     if not user_data:
-        return jsonify({'error': 'No data found for current session'}), 404
+        return jsonify({'error': 'No data found for user'}), 404
     
     return jsonify(_analysis_result_to_dict(user_data))
 

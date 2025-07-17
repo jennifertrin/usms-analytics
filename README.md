@@ -141,12 +141,24 @@ The application supports both local Flask development and Vercel serverless depl
 
 ## 🚀 Deployment
 
-### Vercel Deployment
+### Vercel Deployment (Recommended)
 
-The project is configured for Vercel deployment with both frontend and serverless functions:
+The project is optimized for Vercel deployment with serverless functions:
 
-1. **Frontend**: Deployed as a static site
-2. **API**: Deployed as serverless functions in the `/api` directory
+```bash
+# Quick deploy
+./deploy-vercel.sh
+```
+
+**Key Features:**
+- ✅ Header-based session management (Vercel-compatible)
+- ✅ Monorepo structure with single deployment
+- ✅ Serverless functions with 30s timeout
+- ✅ Automatic environment variable setup
+
+**For detailed deployment guide, see:**
+- [Quick Start Guide](README_VERCEL.md)
+- [Complete Deployment Guide](VERCEL_DEPLOYMENT.md)
 
 ### Local Production Build
 

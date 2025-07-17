@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Dict, Any
 
 # Add the current directory to the path so we can import our modules
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from services.usms_scraper import USMSScraper
 from services.performance_analyzer import PerformanceAnalyzer
@@ -119,7 +119,7 @@ class handler(BaseHTTPRequestHandler):
         self.send_header('Content-type', 'application/json')
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, X-User-ID')
         self.end_headers()
 
         try:
@@ -135,8 +135,10 @@ class handler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps(response).encode())
                 return
 
-            # Create a temporary user session for this request
-            user_id = user_service.create_user_session()
+            # Get or create user session
+            user_id = self.headers.get('X-User-ID')
+            if not user_id:
+                user_id = user_service.create_user_session()
 
             # Scrape the USMS results
             results_data = scraper.scrape_usms_results(usms_link)
@@ -178,5 +180,5 @@ class handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, X-User-ID')
         self.end_headers() 

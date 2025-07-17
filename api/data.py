@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Dict, Any
 
 # Add the current directory to the path so we can import our modules
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from services.user_service import UserService
 from models.data_models import AnalysisResult
@@ -114,14 +114,28 @@ class handler(BaseHTTPRequestHandler):
         self.send_header('Content-type', 'application/json')
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, X-User-ID')
         self.end_headers()
 
         try:
-            # For serverless, we can't maintain sessions between requests
-            # This endpoint would need to be called with a user_id parameter
-            # For now, we'll return an error indicating no session
-            response = {'error': 'No active session'}
+            # Get user ID from headers
+            user_id = self.headers.get('X-User-ID')
+            
+            if not user_id:
+                response = {'error': 'No user ID provided'}
+                self.wfile.write(json.dumps(response).encode())
+                return
+            
+            # Get user data
+            user_data = user_service.get_user_data(user_id)
+            
+            if not user_data:
+                response = {'error': 'No data found for user'}
+                self.wfile.write(json.dumps(response).encode())
+                return
+            
+            # Convert to dictionary and return
+            response = _analysis_result_to_dict(user_data)
             self.wfile.write(json.dumps(response).encode())
 
         except Exception as e:
@@ -134,5 +148,5 @@ class handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, X-User-ID')
         self.end_headers() 

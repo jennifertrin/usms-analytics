@@ -6,7 +6,6 @@ class Config:
     
     # Flask settings
     SECRET_KEY = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
-    SESSION_TYPE = 'filesystem'
     DEBUG = os.environ.get('FLASK_DEBUG', 'True').lower() == 'true'
     
     # Server settings

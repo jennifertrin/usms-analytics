@@ -3,9 +3,10 @@ import json
 import sys
 import os
 from datetime import datetime
+import uuid
 
 # Add the current directory to the path so we can import our modules
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from services.user_service import UserService
 
@@ -18,26 +19,41 @@ class handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
         self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, DELETE, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, X-User-ID')
         self.end_headers()
 
         try:
-            # For serverless, we'll create a new session for each request
-            # In a real implementation, you'd want to use cookies or headers for session management
-            user_id = user_service.create_user_session()
-            user_session = user_service.get_user_session_info(user_id)
+            # Get user ID from headers (client should send this)
+            user_id = self.headers.get('X-User-ID')
             
-            if not user_session:
-                response = {'error': 'No data found for current session'}
-                self.wfile.write(json.dumps(response).encode())
-                return
-            
-            response = {
-                'user_id': user_session.user_id,
-                'has_data': True,
-                'swimmer_name': user_session.swimmer_name
-            }
+            if not user_id:
+                # Create new session if no user ID provided
+                user_id = user_service.create_user_session()
+                response = {
+                    'user_id': user_id,
+                    'has_data': False,
+                    'swimmer_name': None,
+                    'new_session': True
+                }
+            else:
+                # Get existing session data
+                user_session = user_service.get_user_session_info(user_id)
+                
+                if not user_session:
+                    response = {
+                        'user_id': user_id,
+                        'has_data': False,
+                        'swimmer_name': None,
+                        'new_session': False
+                    }
+                else:
+                    response = {
+                        'user_id': user_session.user_id,
+                        'has_data': True,
+                        'swimmer_name': user_session.swimmer_name,
+                        'new_session': False
+                    }
             
             self.wfile.write(json.dumps(response).encode())
 
@@ -46,19 +62,49 @@ class handler(BaseHTTPRequestHandler):
             response = {'error': 'Internal server error'}
             self.wfile.write(json.dumps(response).encode())
 
+    def do_POST(self):
+        # Set CORS headers
+        self.send_response(200)
+        self.send_header('Content-type', 'application/json')
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, X-User-ID')
+        self.end_headers()
+
+        try:
+            # Create a new session
+            user_id = user_service.create_user_session()
+            response = {
+                'user_id': user_id,
+                'message': 'New session created successfully'
+            }
+            
+            self.wfile.write(json.dumps(response).encode())
+
+        except Exception as e:
+            print(f"Error in session POST endpoint: {e}")
+            response = {'error': 'Internal server error'}
+            self.wfile.write(json.dumps(response).encode())
+
     def do_DELETE(self):
         # Set CORS headers
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
         self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, DELETE, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, X-User-ID')
         self.end_headers()
 
         try:
-            # For serverless, we can't maintain sessions between requests
-            # This is a placeholder for session clearing logic
-            response = {'message': 'Session cleared successfully'}
+            # Get user ID from headers
+            user_id = self.headers.get('X-User-ID')
+            
+            if user_id:
+                user_service.clear_user_data(user_id)
+                response = {'message': 'Session cleared successfully'}
+            else:
+                response = {'message': 'No session to clear'}
+                
             self.wfile.write(json.dumps(response).encode())
 
         except Exception as e:
@@ -70,6 +116,6 @@ class handler(BaseHTTPRequestHandler):
         # Handle preflight requests
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, DELETE, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, X-User-ID')
         self.end_headers() 
