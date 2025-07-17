@@ -1,51 +1,30 @@
-# Python
+# Exclude unnecessary files for Vercel deployment
+
+# Python cache and virtual environments
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
+*.pyc
+*.pyo
+*.pyd
 venv/
 env/
 ENV/
-env.bak/
-venv.bak/
-*.egg-info/
-dist/
-build/
-eggs/
-parts/
-bin/
-var/
-sdist/
-develop-eggs/
-.installed.cfg
-lib/
-lib64/
 
-# Node
+# Node modules (will be installed during build)
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.npm
-.yarn-integrity
 
-# Development
+# Development files
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 .DS_Store
 *.log
-*.tmp
-*.temp
 
-# IDE
+# IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
 
 # Git
 .git/
@@ -54,12 +33,6 @@ yarn-error.log*
 # Testing
 coverage/
 .nyc_output/
-
-# Build artifacts
-dist/
-build/
-*.tgz
-*.tar.gz
 
 # Server files (not needed for Vercel)
 server/
@@ -70,4 +43,9 @@ flask_session/
 data/
 *.csv
 *.json
-*.xlsx 
+*.xlsx
+
+# Documentation (optional)
+README*.md
+*.md
+!README.md 
