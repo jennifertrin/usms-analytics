@@ -29,12 +29,14 @@ Use `npm run build:vercel` which includes the legacy peer deps flag.
 
 ### 2. Build Configuration Issues
 
-#### Problem: Wrong distDir Path
-**Error**: Build succeeds but files not found
+#### Problem: Conflicting functions and builds configuration
+**Error**: `Conflicting functions and builds configuration`
 
-**Solution**: Ensure `vercel.json` has correct paths:
+**Solution**: Use consistent configuration format. Don't mix `builds` and `functions` sections:
+
 ```json
 {
+  "version": 2,
   "builds": [
     {
       "src": "client/package.json",
@@ -45,10 +47,33 @@ Use `npm run build:vercel` which includes the legacy peer deps flag.
         "installCommand": "cd client && npm install --legacy-peer-deps --production=false",
         "buildCommand": "cd client && npm run build:vercel"
       }
+    },
+    {
+      "src": "api/*.py",
+      "use": "@vercel/python",
+      "config": {
+        "runtime": "python3.9",
+        "maxDuration": 30
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/client/$1"
     }
   ]
 }
 ```
+
+#### Problem: Wrong distDir Path
+**Error**: Build succeeds but files not found
+
+**Solution**: Ensure `vercel.json` has correct paths as shown above.
 
 ### 3. Python Dependencies
 
