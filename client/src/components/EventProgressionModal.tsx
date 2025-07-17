@@ -38,17 +38,6 @@ const EventProgressionModal = ({ isOpen, onClose, eventName, analysisData }: Eve
       const parseDate = (dateStr: string): Date => {
         if (!dateStr) return new Date()
         
-        // Try different date formats
-        const formats = [
-          // ISO format
-          /^\d{4}-\d{2}-\d{2}$/,
-          // MM/DD/YYYY format
-          /^\d{1,2}\/\d{1,2}\/\d{4}$/,
-          // DD/MM/YYYY format
-          /^\d{1,2}\/\d{1,2}\/\d{4}$/,
-          // Other formats...
-        ]
-        
         const date = new Date(dateStr)
         return isNaN(date.getTime()) ? new Date() : date
       }
