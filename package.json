@@ -15,8 +15,8 @@
     "start": "cd server && source venv/bin/activate && python app.py",
     "test": "cd server && source venv/bin/activate && python run_tests.py",
     "clean:python": "cd server && rm -rf venv",
-    "build": "rm -rf node_modules/.vite && tsc -b && vite build --force",
-    "vercel-build": "rm -rf node_modules/.vite && tsc -b && vite build --force"
+    "build": "npm install @rollup/rollup-linux-x64-gnu && tsc -b && vite build",
+    "vercel-build": "npm install @rollup/rollup-linux-x64-gnu && tsc -b && vite build"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
