@@ -24,6 +24,7 @@
   "engines": {
     "node": "18.x",
     "npm": ">=8.0.0",
-    "python": ">=3.8.0"
+    "python": ">=3.8.0",
+    "@rollup/rollup-linux-x64-gnu": "^4.0.0"
   }
 }
