@@ -16,7 +16,7 @@
     "test": "cd server && source venv/bin/activate && python run_tests.py",
     "clean:python": "cd server && rm -rf venv",
     "build": "npm run build",
-    "vercel-build": "cd client && npm install && npm run build"
+    "vercel-build": "echo 'Listing root:' && ls -la && echo 'Listing client:' && ls -la client && cd client && npm install && npm run build"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
