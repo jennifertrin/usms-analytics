@@ -9,18 +9,33 @@
         }
       },
       {
-        "src": "server/requirements.txt",
+        "src": "api/**/*.py",
         "use": "@vercel/python"
       }
     ],
     "routes": [
       {
         "src": "/api/(.*)",
-        "dest": "server/app.py"
+        "dest": "/api/$1"
       },
       {
         "src": "/(.*)",
-        "dest": "client/dist/$1"
+        "dest": "/client/index.html"
       }
-    ]
+    ],
+    "rewrites": [
+      {
+        "source": "/api/(.*)",
+        "destination": "/api/$1"
+      },
+      {
+        "source": "/((?!api).*)",
+        "destination": "/client/index.html"
+      }
+    ],
+    "functions": {
+      "api/**/*.py": {
+        "runtime": "python3.9"
+      }
+    }
   }
