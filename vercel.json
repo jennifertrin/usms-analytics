@@ -5,16 +5,16 @@
     "outputDirectory": "client/dist",
     "functions": {
       "api/analyze.py": {
-        "runtime": "@vercel/python@3.1.7"
+        "runtime": "@vercel/python@3.12"
       },
       "api/data.py": {
-        "runtime": "@vercel/python@3.1.7"
+        "runtime": "@vercel/python@3.12"
       },
       "api/health.py": {
-        "runtime": "@vercel/python@3.1.7"
+        "runtime": "@vercel/python@3.12"
       },
       "api/session.py": {
-        "runtime": "@vercel/python@3.1.7"
+        "runtime": "@vercel/python@3.12"
       }
     },
     "rewrites": [
