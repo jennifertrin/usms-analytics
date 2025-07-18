@@ -1,222 +1,131 @@
 # Vercel Deployment Guide
 
 ## Overview
+This guide explains how to deploy your USMS Analytics app to Vercel with proper CORS configuration.
 
-This guide explains how to deploy the USMS Analytics application to Vercel, including the necessary optimizations for serverless architecture.
-
-## Key Changes Made for Vercel
-
-### 1. Session Management
-**Problem**: Flask sessions with filesystem storage don't work on Vercel's serverless functions.
-
-**Solution**: Implemented header-based session management using `X-User-ID` headers.
-
-### 2. Build Configuration
-- Updated `vercel.json` to handle monorepo structure
-- Configured proper build paths for frontend and backend
-- Set function timeouts and runtime settings
-
-### 3. API Endpoints
-- All API endpoints now support `X-User-ID` header for session management
-- Removed Flask session dependencies
-- Updated CORS headers to include custom headers
+## Prerequisites
+- Vercel account
+- Your code pushed to a Git repository (GitHub, GitLab, etc.)
 
 ## Deployment Steps
 
-### 1. Environment Setup
+### 1. Connect Your Repository
+1. Go to [vercel.com](https://vercel.com)
+2. Click "New Project"
+3. Import your Git repository
+4. Vercel will automatically detect it's a Python project
 
-Create a `.env` file in the root directory:
+### 2. Configure Environment Variables
+
+In your Vercel project settings, add these environment variables:
+
+#### For Client (Vite) App:
+```
+VITE_API_BASE_URL=https://your-app-name.vercel.app
+```
+
+#### For Next.js App:
+```
+NEXT_PUBLIC_API_BASE_URL=https://your-app-name.vercel.app
+```
+
+**Important**: Replace `your-app-name` with your actual Vercel app name.
+
+### 3. Build Settings
+
+Vercel should automatically detect your build settings from `vercel.json`, but verify:
+
+- **Framework Preset**: Other
+- **Build Command**: `pnpm run vercel-build`
+- **Output Directory**: `dist`
+- **Install Command**: `pnpm install`
+
+### 4. Deploy
+
+1. Click "Deploy"
+2. Wait for the build to complete
+3. Your app will be available at `https://your-app-name.vercel.app`
+
+## CORS Configuration
+
+The app is configured to allow access from any origin:
+
+### API Level (Python)
+Each API endpoint (`/api/analyze`, `/api/data`, `/api/session`, `/api/health`) includes:
+```python
+self.send_header('Access-Control-Allow-Origin', '*')
+self.send_header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS')
+self.send_header('Access-Control-Allow-Headers', 'Content-Type, X-User-ID')
+```
+
+### Vercel Level
+The `vercel.json` configuration adds additional CORS headers for all `/api/*` routes.
+
+## Testing Your Deployment
+
+### 1. Test API Endpoints
 ```bash
-SECRET_KEY=your-secret-key-here
-FLASK_DEBUG=false
-VERCEL=true
+# Health check
+curl https://your-app-name.vercel.app/api/health
+
+# Session endpoint
+curl https://your-app-name.vercel.app/api/session
 ```
 
-### 2. Install Vercel CLI
-```bash
-npm install -g vercel
-```
-
-### 3. Deploy to Vercel
-```bash
-# Login to Vercel
-vercel login
-
-# Deploy
-vercel --prod
-```
-
-### 4. Environment Variables
-Set these in your Vercel dashboard:
-- `SECRET_KEY`: Your application secret key
-- `FLASK_DEBUG`: Set to `false` for production
-- `VERCEL`: Set to `true`
-
-## Session Management
-
-### How It Works
-1. Client calls `/api/session` to get a new user ID
-2. Client stores the user ID locally (localStorage, sessionStorage, etc.)
-3. Client includes `X-User-ID` header in all subsequent API calls
-4. Server uses the user ID to retrieve/store user data
-
-### Client Implementation
-```javascript
-// Get or create session
-async function getSession() {
-  let userId = localStorage.getItem('userId');
-  
-  if (!userId) {
-    const response = await fetch('/api/session', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-    const data = await response.json();
-    userId = data.user_id;
-    localStorage.setItem('userId', userId);
-  }
-  
-  return userId;
-}
-
-// Make API calls with session
-async function analyzePerformance(usmsLink) {
-  const userId = await getSession();
-  
-  const response = await fetch('/api/analyze', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-User-ID': userId
-    },
-    body: JSON.stringify({ usmsLink })
-  });
-  
-  return response.json();
-}
-```
-
-## Limitations and Considerations
-
-### 1. Stateless Architecture
-- Each serverless function invocation is independent
-- No persistent memory between requests
-- User data is stored in-memory (will be lost on function restart)
-
-### 2. Production Recommendations
-For production use, consider implementing:
-- **Redis**: For persistent session storage
-- **Database**: For user data persistence
-- **JWT Tokens**: For stateless authentication
-
-### 3. Function Timeouts
-- Default timeout: 10 seconds
-- Maximum timeout: 30 seconds (configured in vercel.json)
-- Long-running operations may timeout
-
-### 4. Cold Starts
-- First request to each function may be slower
-- Consider implementing warm-up strategies
-
-## File Structure
-```
-/
-├── api/                    # Vercel serverless functions
-│   ├── analyze.py         # Performance analysis
-│   ├── data.py           # Data retrieval
-│   ├── health.py         # Health check
-│   └── session.py        # Session management
-├── client/                # React frontend
-│   ├── src/
-│   ├── package.json
-│   └── vite.config.ts
-├── services/              # Business logic
-├── models/               # Data models
-├── utils/                # Utilities
-├── vercel.json          # Vercel configuration
-├── requirements-vercel.txt # Python dependencies
-└── README.md
-```
+### 2. Test Frontend
+1. Visit `https://your-app-name.vercel.app`
+2. Try submitting a USMS link
+3. Check browser console for any CORS errors
 
 ## Troubleshooting
 
-### Common Issues
+### CORS Errors
+If you still see CORS errors:
+1. Verify environment variables are set correctly
+2. Check that your frontend is using the correct API base URL
+3. Ensure you're not mixing HTTP and HTTPS
 
-1. **Import Errors**
-   - Ensure all Python dependencies are in `requirements-vercel.txt`
-   - Check import paths in API functions
+### API Not Found
+If APIs return 404:
+1. Check that your Python files are in the `/api/` directory
+2. Verify `vercel.json` has the correct Python build configuration
+3. Check build logs for any Python import errors
 
-2. **CORS Errors**
-   - Verify CORS headers in API responses
-   - Check client-side request headers
+### Environment Variables Not Working
+1. Redeploy after setting environment variables
+2. Verify variable names match your code exactly
+3. Check that variables are set for the correct environment (Production/Preview)
 
-3. **Session Issues**
-   - Ensure client sends `X-User-ID` header
-   - Check localStorage/sessionStorage implementation
+## Local Development vs Production
 
-4. **Build Failures**
-   - Verify `vercel.json` configuration
-   - Check build paths and dependencies
+### Local Development
+- API runs on `http://localhost:5000`
+- Frontend connects to local API
+- Use `npm run dev` or `pnpm dev`
 
-### Debugging
-- Use Vercel dashboard to view function logs
-- Check browser developer tools for client-side errors
-- Monitor function execution times and memory usage
-
-## Performance Optimization
-
-1. **Bundle Size**
-   - Minimize Python dependencies
-   - Use tree-shaking for frontend
-
-2. **Function Optimization**
-   - Keep functions lightweight
-   - Avoid heavy computations in serverless functions
-
-3. **Caching**
-   - Implement client-side caching
-   - Consider CDN for static assets
+### Production (Vercel)
+- API runs on `https://your-app-name.vercel.app/api/`
+- Frontend connects to Vercel API
+- Environment variables control the API base URL
 
 ## Security Considerations
 
-1. **Environment Variables**
-   - Never commit secrets to version control
-   - Use Vercel's environment variable system
+The current CORS configuration allows access from any origin (`*`). For production use, consider:
 
-2. **Input Validation**
-   - Validate all user inputs
-   - Sanitize USMS links
+1. **Restricting origins** to specific domains
+2. **Adding authentication** if needed
+3. **Rate limiting** to prevent abuse
 
-3. **Rate Limiting**
-   - Consider implementing rate limiting
-   - Monitor API usage
+To restrict origins, update the CORS headers in your API files:
+```python
+# Instead of '*', specify allowed origins
+self.send_header('Access-Control-Allow-Origin', 'https://your-domain.com')
+```
 
-## Monitoring
+## Support
 
-1. **Vercel Analytics**
-   - Monitor function performance
-   - Track error rates
-
-2. **Custom Logging**
-   - Add structured logging to API functions
-   - Monitor user session patterns
-
-## Future Improvements
-
-1. **Database Integration**
-   - Add persistent storage for user data
-   - Implement proper user management
-
-2. **Authentication**
-   - Add user authentication system
-   - Implement JWT tokens
-
-3. **Caching Layer**
-   - Add Redis for session storage
-   - Implement result caching
-
-4. **API Versioning**
-   - Implement API versioning strategy
-   - Add backward compatibility 
+If you encounter issues:
+1. Check Vercel build logs
+2. Verify environment variables
+3. Test API endpoints directly
+4. Check browser console for errors 
