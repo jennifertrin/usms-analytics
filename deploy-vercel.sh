@@ -1,83 +1,34 @@
 #!/bin/bash
 
-# Vercel Deployment Script for USMS Analytics
-# This script automates the deployment process to Vercel
+echo "🚀 Starting Vercel deployment preparation..."
 
-set -e  # Exit on any error
+# Clean previous builds
+echo "🧹 Cleaning previous builds..."
+rm -rf client/dist
+rm -rf .vercel
 
-echo "🚀 Starting Vercel deployment for USMS Analytics..."
-
-# Check if Vercel CLI is installed
-if ! command -v vercel &> /dev/null; then
-    echo "❌ Vercel CLI is not installed. Installing now..."
-    npm install -g vercel
-fi
-
-# Check if we're in the right directory
-if [ ! -f "vercel.json" ]; then
-    echo "❌ Error: vercel.json not found. Please run this script from the project root."
-    exit 1
-fi
-
-# Check if client dependencies are installed
-if [ ! -d "client/node_modules" ]; then
-    echo "📦 Installing client dependencies..."
-    cd client
-    npm install --legacy-peer-deps
-    cd ..
-fi
-
-# Check if requirements-vercel.txt exists
-if [ ! -f "requirements-vercel.txt" ]; then
-    echo "❌ Error: requirements-vercel.txt not found."
-    exit 1
-fi
-
-# Check environment variables
-echo "🔧 Checking environment variables..."
-
-# Create .env file if it doesn't exist
-if [ ! -f ".env" ]; then
-    echo "📝 Creating .env file..."
-    cat > .env << EOF
-# Vercel Deployment Configuration
-SECRET_KEY=$(openssl rand -hex 32)
-FLASK_DEBUG=false
-VERCEL=true
-EOF
-    echo "✅ Created .env file with generated SECRET_KEY"
-else
-    echo "✅ .env file already exists"
-fi
+# Install dependencies
+echo "📦 Installing dependencies..."
+pnpm install
 
 # Build the client
 echo "🔨 Building client application..."
 cd client
-npm run build
-cd ..
+pnpm install --frozen-lockfile
+pnpm run build
 
 # Check if build was successful
-if [ ! -d "client/dist" ]; then
-    echo "❌ Error: Client build failed. dist/ directory not found."
+if [ ! -f "dist/index.html" ]; then
+    echo "❌ Build failed - index.html not found"
     exit 1
 fi
 
-echo "✅ Client build successful"
+echo "✅ Build completed successfully!"
+echo "📁 Build contents:"
+ls -la dist/
 
-# Deploy to Vercel
-echo "🚀 Deploying to Vercel..."
-vercel --prod
+# Go back to root
+cd ..
 
-echo "✅ Deployment completed successfully!"
-echo ""
-echo "📋 Next steps:"
-echo "1. Set environment variables in your Vercel dashboard:"
-echo "   - SECRET_KEY: $(grep SECRET_KEY .env | cut -d'=' -f2)"
-echo "   - FLASK_DEBUG: false"
-echo "   - VERCEL: true"
-echo ""
-echo "2. Test your deployment by visiting the provided URL"
-echo ""
-echo "3. Check the Vercel dashboard for function logs and performance metrics"
-echo ""
-echo "🔗 For more information, see VERCEL_DEPLOYMENT.md" 
+echo "🎯 Ready for Vercel deployment!"
+echo "Run: vercel --prod" 

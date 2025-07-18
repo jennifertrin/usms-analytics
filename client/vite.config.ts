@@ -5,20 +5,26 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   build: {
-    outDir: 'dist',
+    outDir: '../dist',
     sourcemap: false,
     emptyOutDir: true,
+    assetsDir: 'assets',
     rollupOptions: {
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
           router: ['react-router-dom'],
           charts: ['plotly.js-dist-min', 'react-plotly.js']
-        }
+        },
+        assetFileNames: 'assets/[name]-[hash][extname]',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js'
       }
-    }
+    },
+    target: 'es2015',
+    minify: 'terser'
   },
-  base: './', // Important for Vercel deployment
+  base: '',
   server: {
     port: 3000,
     host: true,
