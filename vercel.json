@@ -18,16 +18,8 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
-    },
-    {
       "source": "/((?!api|assets|_next|static|dist|.*\\.[a-zA-Z0-9]+$).*)",
       "destination": "/index.html"
-    },
-    { 
-      "source": "/(.*)", 
-      "destination": "/index.html" 
     }
   ],
   "headers": [
