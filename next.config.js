@@ -5,10 +5,10 @@ const nextConfig = {
   
   reactStrictMode: true,
   
-  // Explicitly tell Next.js to look in both locations
-  experimental: {
-    appDir: true
-  }
+  // appDir is no longer needed - it's enabled by default in Next.js 13.4+
+  // experimental: {
+  //   appDir: true
+  // }
 }
 
 module.exports = nextConfig
