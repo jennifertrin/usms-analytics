@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AnalyzeResponse, ErrorResponse } from '@/types/api';
-import { userService } from '@/lib/userService';
+import type { AnalyzeResponse, ErrorResponse } from '../../../types/api';
+import { userService } from '../../../lib/userService';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';

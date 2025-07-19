@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AnalyzeResponse, ErrorResponse } from '@/types/api';
-import { getSampleData } from '@/lib/sampleData';
+import { AnalyzeResponse, ErrorResponse } from '../../../types/api';
+import { getSampleData } from '../../../lib/sampleData';
 
 export async function GET(request: NextRequest): Promise<NextResponse<AnalyzeResponse | ErrorResponse>> {
   try {

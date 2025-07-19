@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { SessionResponse, CreateSessionResponse, ErrorResponse } from '@/types/api';
-import { userService } from '@/lib/userService';
+import { SessionResponse, CreateSessionResponse, ErrorResponse } from '../../../types/api';
+import { userService } from '../../../lib/userService';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -61,7 +61,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<CreateSes
     
     const response = {
       userId,
-      newSession: true
+      newSession: true,
+      message: 'Session created successfully'
     } as CreateSessionResponse;
     
     console.log(`Session POST response:`, response);
@@ -99,4 +100,4 @@ export async function DELETE(request: NextRequest): Promise<NextResponse<{ succe
       { status: 500 }
     );
   }
-} 
+}
