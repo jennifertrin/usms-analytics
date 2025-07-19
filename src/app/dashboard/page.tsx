@@ -12,6 +12,7 @@ export default function DashboardPage() {
   const [analysisData, setAnalysisData] = useState<AnalyzeResponse | null>(null)
   const [userSession, setUserSession] = useState<SessionResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [isClient, setIsClient] = useState(false)
   const router = useRouter()
 
@@ -20,76 +21,77 @@ export default function DashboardPage() {
     setIsClient(true)
   }, [])
 
-  // Check for existing session on app load
+  // Single effect to handle all data loading
   useEffect(() => {
-    const checkSession = async () => {
+    if (!isClient) return
+
+    const loadDashboardData = async () => {
       try {
-        // Check if we're on the client side before accessing localStorage
-        if (typeof window === 'undefined') {
-          return
-        }
+        setIsLoading(true)
+        setError(null)
         
+        // Check for userId in localStorage
         const userId = localStorage.getItem('userId')
         if (!userId) {
+          console.log('No userId found, redirecting to home')
           router.push('/')
           return
         }
 
-        const response = await fetch('/api/session', {
-          headers: {
-            'X-User-ID': userId
-          }
-        })
-        
-        if (response.ok) {
-          const sessionData = await response.json()
-          setUserSession(sessionData)
-          
-          // If user has data, fetch it
-          if (sessionData.hasData) {
-            const dataResponse = await fetch('/api/data', {
-              headers: {
-                'X-User-ID': userId
-              }
-            })
-            
-            if (dataResponse.ok) {
-              const data = await dataResponse.json()
-              setAnalysisData(data)
-            }
-          } else {
-            // No data, redirect to home
-            router.push('/')
-          }
-        } else {
-          // No active session, redirect to home
+        // Check session and get data in parallel
+        const [sessionResponse, dataResponse] = await Promise.all([
+          fetch('/api/session', {
+            headers: { 'X-User-ID': userId }
+          }),
+          fetch('/api/data', {
+            headers: { 'X-User-ID': userId }
+          })
+        ])
+
+        // Handle session response
+        if (!sessionResponse.ok) {
+          console.log('Session not found, redirecting to home')
+          localStorage.removeItem('userId')
           router.push('/')
+          return
         }
+
+        const sessionData = await sessionResponse.json()
+        
+        // Handle data response
+        if (!dataResponse.ok) {
+          console.log('No data found, redirecting to home')
+          router.push('/')
+          return
+        }
+
+        const data = await dataResponse.json()
+        
+        // Set both states at once to minimize re-renders
+        setUserSession(sessionData)
+        setAnalysisData(data)
+        
       } catch (error) {
-        // No active session, redirect to home
+        console.error('Error loading dashboard data:', error)
+        setError('Failed to load dashboard data')
+        // Clear invalid session and redirect
+        localStorage.removeItem('userId')
         router.push('/')
       } finally {
         setIsLoading(false)
       }
     }
 
-    checkSession()
-  }, [router])
+    loadDashboardData()
+  }, [isClient, router])
 
   const handleClearSession = useCallback(async () => {
     try {
-      // Check if we're on the client side before accessing localStorage
-      if (typeof window === 'undefined') {
-        return
-      }
-      
       const userId = localStorage.getItem('userId')
       if (userId) {
         await fetch('/api/session', {
           method: 'DELETE',
-          headers: {
-            'X-User-ID': userId
-          }
+          headers: { 'X-User-ID': userId }
         })
       }
       
@@ -99,6 +101,9 @@ export default function DashboardPage() {
       router.push('/')
     } catch (error) {
       console.error('Error clearing session:', error)
+      // Still redirect even if API call fails
+      localStorage.removeItem('userId')
+      router.push('/')
     }
   }, [router])
 
@@ -108,21 +113,22 @@ export default function DashboardPage() {
         <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl">
           <span className="text-3xl">🏊‍♂️</span>
         </div>
-        <div className="text-lg font-semibold text-slate-700">Loading...</div>
+        <div className="text-lg font-semibold text-slate-700">Loading dashboard...</div>
+        {error && (
+          <div className="text-red-600 mt-2 text-sm">{error}</div>
+        )}
       </div>
     </div>
-  ), [])
+  ), [error])
 
-  if (!isClient) {
+  // Show loading screen while not on client or while loading
+  if (!isClient || isLoading) {
     return loadingScreen
   }
 
-  if (isLoading) {
-    return loadingScreen
-  }
-
+  // Show loading if data is missing (will redirect)
   if (!analysisData || !userSession) {
-    return null // Will redirect to home
+    return loadingScreen
   }
 
   return (

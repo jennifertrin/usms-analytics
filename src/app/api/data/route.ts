@@ -12,17 +12,26 @@ export async function GET(request: NextRequest): Promise<NextResponse<AnalyzeRes
     console.log('Data GET request - User ID:', userId);
     
     if (!userId) {
+      console.log('No user ID provided in data GET request');
       return NextResponse.json(
         { error: 'No user ID provided' } as ErrorResponse,
         { status: 400 }
       );
     }
     
+    // Debug current state
+    userService.debugState();
+    
     const userData = userService.getUserData(userId);
     
     console.log('User data found:', !!userData);
+    if (userData) {
+      console.log(`Data contains swimmer: ${userData.swimmer.name}, age: ${userData.swimmer.age}`);
+      console.log(`Event distribution keys: ${Object.keys(userData.eventDistribution)}`);
+    }
     
     if (!userData) {
+      console.log(`No data found for user ${userId}`);
       return NextResponse.json(
         { error: 'No data found for user' } as ErrorResponse,
         { status: 404 }

@@ -8,18 +8,26 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest): Promise<NextResponse<SessionResponse | ErrorResponse>> {
   try {
     const userId = request.headers.get('X-User-ID');
+    console.log(`Session GET request - User ID: ${userId}`);
     
     if (!userId) {
+      console.log('No user ID provided in session GET request');
       return NextResponse.json(
         { error: 'No user ID provided' } as ErrorResponse,
         { status: 400 }
       );
     }
     
+    // Debug current state
+    userService.debugState();
+    
     const userSession = userService.getUserSessionInfo(userId);
     const userData = userService.getUserData(userId);
     
+    console.log(`Session check - Session exists: ${!!userSession}, Data exists: ${!!userData}`);
+    
     if (!userSession) {
+      console.log(`No session found for ${userId}, returning hasData: false`);
       return NextResponse.json({
         userId,
         hasData: false,
@@ -28,12 +36,15 @@ export async function GET(request: NextRequest): Promise<NextResponse<SessionRes
       } as SessionResponse);
     }
     
-    return NextResponse.json({
+    const response = {
       userId: userSession.userId,
       hasData: !!userData,
       swimmerName: userSession.swimmerName,
       newSession: false
-    } as SessionResponse);
+    } as SessionResponse;
+    
+    console.log(`Session GET response:`, response);
+    return NextResponse.json(response);
   } catch (error) {
     console.error('Session GET error:', error);
     return NextResponse.json(
@@ -45,12 +56,16 @@ export async function GET(request: NextRequest): Promise<NextResponse<SessionRes
 
 export async function POST(request: NextRequest): Promise<NextResponse<CreateSessionResponse | ErrorResponse>> {
   try {
+    console.log('Session POST request - Creating new session');
     const userId = userService.createUserSession();
     
-    return NextResponse.json({
+    const response = {
       userId,
-      message: 'New session created successfully'
-    } as CreateSessionResponse);
+      newSession: true
+    } as CreateSessionResponse;
+    
+    console.log(`Session POST response:`, response);
+    return NextResponse.json(response);
   } catch (error) {
     console.error('Session POST error:', error);
     return NextResponse.json(
@@ -60,16 +75,23 @@ export async function POST(request: NextRequest): Promise<NextResponse<CreateSes
   }
 }
 
-export async function DELETE(request: NextRequest): Promise<NextResponse<{ message: string } | ErrorResponse>> {
+export async function DELETE(request: NextRequest): Promise<NextResponse<{ success: boolean } | ErrorResponse>> {
   try {
     const userId = request.headers.get('X-User-ID');
+    console.log(`Session DELETE request - User ID: ${userId}`);
     
-    if (userId) {
-      userService.clearUserData(userId);
-      return NextResponse.json({ message: 'Session cleared successfully' });
+    if (!userId) {
+      console.log('No user ID provided in session DELETE request');
+      return NextResponse.json(
+        { error: 'No user ID provided' } as ErrorResponse,
+        { status: 400 }
+      );
     }
     
-    return NextResponse.json({ message: 'No session to clear' });
+    userService.clearUserData(userId);
+    console.log(`Session DELETE completed for ${userId}`);
+    
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Session DELETE error:', error);
     return NextResponse.json(

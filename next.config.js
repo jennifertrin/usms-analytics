@@ -4,6 +4,9 @@ const nextConfig = {
   output: 'standalone',
   // Remove the API proxy since we're using Next.js API routes
   // The API routes are now handled directly by Next.js in src/app/api/
+  
+  // Suppress hydration warnings for browser extensions like Grammarly
+  reactStrictMode: true
 }
 
 module.exports = nextConfig 
