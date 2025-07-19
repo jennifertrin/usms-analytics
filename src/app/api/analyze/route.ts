@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AnalyzeRequest, AnalyzeResponse, ErrorResponse } from '@/types/api';
-import { userService } from '@/lib/userService';
-import { analysisService } from '@/lib/analysisService';
-import { getSampleData } from '@/lib/sampleData';
+import { AnalyzeRequest, AnalyzeResponse, ErrorResponse } from '../../../types/api';
+import { userService } from '../../../lib/userService';
+import { analysisService } from '../../../lib/analysisService';
+import { getSampleData } from '../../../lib/sampleData';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeRe
       },
       meetBreakdown: {
         meets: [],
-        currentMeet: null,
+        currentMeet: {},
         allTimeImprovements: [],
         ageGroupImprovements: {}
       },
@@ -181,13 +181,16 @@ export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeRe
     // Return a very simple error response
     try {
       return NextResponse.json(
-        { error: 'Internal server error' },
+        { error: 'Internal server error' } as ErrorResponse,
         { status: 500 }
       );
     } catch (responseError) {
       console.error('Error creating error response:', responseError);
-      // Last resort - return a basic Response
-      return new Response('Internal server error', { status: 500 });
+      // Last resort - return NextResponse instead of plain Response
+      return NextResponse.json(
+        { error: 'Critical system error' } as ErrorResponse,
+        { status: 500 }
+      );
     }
   }
 }
