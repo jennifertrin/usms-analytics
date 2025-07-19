@@ -5,8 +5,8 @@ const userSessions = new Map<string, UserSession>();
 const userData = new Map<string, AnalysisResult>();
 
 export class UserService {
-  createUserSession(): string {
-    const userId = this.generateUserId();
+  createUserSession(customUserId?: string): string {
+    const userId = customUserId || this.generateUserId();
     userSessions.set(userId, {
       userId,
       swimmerName: ''

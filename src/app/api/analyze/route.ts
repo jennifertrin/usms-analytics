@@ -13,6 +13,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeRe
     let userId = request.headers.get('X-User-ID');
     if (!userId) {
       userId = userService.createUserSession();
+    } else {
+      // Ensure session exists for this user ID
+      const existingSession = userService.getUserSessionInfo(userId);
+      if (!existingSession) {
+        userService.createUserSession(userId);
+      }
     }
     
     const body = await request.json();
@@ -145,6 +151,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeRe
     }
     
     // If we have real analysis data, use it
+    console.log('Storing analysis data for user:', userId);
     userService.storeUserData(userId, analysis);
     
     // Convert AnalysisResult to AnalyzeResponse format

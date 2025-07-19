@@ -17,6 +17,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<SessionRes
     }
     
     const userSession = userService.getUserSessionInfo(userId);
+    const userData = userService.getUserData(userId);
     
     if (!userSession) {
       return NextResponse.json({
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<SessionRes
     
     return NextResponse.json({
       userId: userSession.userId,
-      hasData: true,
+      hasData: !!userData,
       swimmerName: userSession.swimmerName,
       newSession: false
     } as SessionResponse);

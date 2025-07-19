@@ -9,6 +9,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<AnalyzeRes
   try {
     const userId = request.headers.get('X-User-ID');
     
+    console.log('Data GET request - User ID:', userId);
+    
     if (!userId) {
       return NextResponse.json(
         { error: 'No user ID provided' } as ErrorResponse,
@@ -17,6 +19,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<AnalyzeRes
     }
     
     const userData = userService.getUserData(userId);
+    
+    console.log('User data found:', !!userData);
     
     if (!userData) {
       return NextResponse.json(
@@ -68,7 +72,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<AnalyzeRes
         ageGroupImprovements: Object.fromEntries(
           Object.entries(userData.meetBreakdown.ageGroupImprovements).map(([ageGroup, improvements]) => [
             ageGroup,
-            improvements.map(imp => ({
+            (improvements as any[]).map(imp => ({
               event: imp.event,
               improvement: imp.improvement,
               rank: imp.rank
@@ -87,7 +91,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<AnalyzeRes
         byAgeGroup: Object.fromEntries(
           Object.entries(userData.personalBests.byAgeGroup).map(([ageGroup, bestTimes]) => [
             ageGroup,
-            bestTimes.map(bt => ({
+            (bestTimes as any[]).map(bt => ({
               event: bt.event,
               time: bt.time,
               date: bt.date,
