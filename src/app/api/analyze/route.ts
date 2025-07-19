@@ -8,10 +8,15 @@ import { getSampleData } from '@/lib/sampleData';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeResponse | ErrorResponse>> {
+  console.log('=== API Route Called ===');
+  
   try {
     // Validate request has proper content type
     const contentType = request.headers.get('content-type');
+    console.log('Content-Type:', contentType);
+    
     if (!contentType?.includes('application/json')) {
+      console.log('Invalid content type, returning error');
       return NextResponse.json(
         { error: 'Content-Type must be application/json' } as ErrorResponse,
         { status: 400 }
@@ -20,20 +25,36 @@ export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeRe
 
     // Get user ID from headers (Vercel-compatible session management)
     let userId = request.headers.get('X-User-ID');
+    console.log('User ID from header:', userId);
+    
     if (!userId) {
       userId = userService.createUserSession();
+      console.log('Created new user session:', userId);
     } else {
       // Ensure session exists for this user ID
       const existingSession = userService.getUserSessionInfo(userId);
       if (!existingSession) {
         userService.createUserSession(userId);
+        console.log('Created session for existing user ID:', userId);
       }
     }
     
     // Safely parse request body
     let body;
     try {
-      body = await request.json();
+      const rawBody = await request.text();
+      console.log('Raw request body:', rawBody);
+      
+      if (!rawBody.trim()) {
+        console.log('Empty request body');
+        return NextResponse.json(
+          { error: 'Request body is empty' } as ErrorResponse,
+          { status: 400 }
+        );
+      }
+      
+      body = JSON.parse(rawBody);
+      console.log('Parsed body:', body);
     } catch (jsonError) {
       console.error('JSON parsing error:', jsonError);
       return NextResponse.json(
@@ -43,259 +64,130 @@ export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeRe
     }
 
     const { usmsLink }: AnalyzeRequest = body;
+    console.log('USMS Link:', usmsLink);
     
     if (!usmsLink) {
+      console.log('No USMS link provided');
       return NextResponse.json(
         { error: 'USMS link is required' } as ErrorResponse,
         { status: 400 }
       );
     }
 
-    console.log('Analyzing USMS link:', usmsLink, 'for user:', userId);
+    console.log('Starting analysis for user:', userId);
 
     // Try to scrape and analyze the USMS results
     let analysis;
     try {
+      console.log('Calling analysis service...');
       analysis = await analysisService.analyzeUSMSResults(usmsLink);
+      console.log('Analysis result:', analysis ? 'Success' : 'Failed/Null');
     } catch (analysisError) {
       console.error('Analysis service error:', analysisError);
       analysis = null;
     }
     
-    // If analysis fails, fall back to sample data for demonstration
-    if (!analysis) {
-      console.log('Analysis failed, using sample data');
-      const sampleData = getSampleData();
-      
-      // Store sample data for this user
-      const analysisResult = {
-        swimmer: {
-          name: sampleData.swimmer?.name || 'Sample Swimmer',
-          age: sampleData.swimmer?.age || 18,
-          totalMeets: sampleData.swimmer?.totalMeets || 0,
-          totalEvents: sampleData.swimmer?.totalEvents || 0
-        },
-        performance: {
-          bestTimes: (sampleData.performance?.bestTimes || []).map(bt => ({
-            event: bt?.event || '',
-            time: bt?.time || '',
-            date: bt?.date || '',
-            meet: bt?.meet || '',
-            courseType: bt?.courseType || 'SCY',
-            seconds: bt?.seconds || 0
-          })),
-          recentTimes: (sampleData.performance?.recentTimes || []).map(pt => ({
-            event: pt?.event || '',
-            times: pt?.times || []
-          }))
-        },
-        meetBreakdown: {
-          meets: (sampleData.meetBreakdown?.meets || []).map(meet => ({
-            name: meet?.name || '',
-            date: meet?.date || '',
-            location: meet?.location || '',
-            results: (meet?.results || []).map(r => ({
-              event: r?.event || '',
-              place: r?.place || 0,
-              time: r?.time || '',
-              improvement: r?.improvement || '',
-              ageGroup: r?.ageGroup || ''
-            }))
-          })),
-          currentMeet: sampleData.meetBreakdown?.currentMeet || null,
-          allTimeImprovements: (sampleData.meetBreakdown?.allTimeImprovements || []).map(imp => ({
-            event: imp?.event || '',
-            improvement: imp?.improvement || '',
-            date: imp?.date || ''
-          })),
-          ageGroupImprovements: Object.fromEntries(
-            Object.entries(sampleData.meetBreakdown?.ageGroupImprovements || {}).map(([ageGroup, improvements]) => [
-              ageGroup,
-              (Array.isArray(improvements) ? improvements : []).map(imp => ({
-                event: imp?.event || '',
-                improvement: imp?.improvement || '',
-                rank: imp?.rank || 0
-              }))
-            ])
-          )
-        },
-        personalBests: {
-          allTime: (sampleData.personalBests?.allTime || []).map(bt => ({
-            event: bt?.event || '',
-            time: bt?.time || '',
-            date: bt?.date || '',
-            meet: bt?.meet || '',
-            courseType: bt?.courseType || 'SCY',
-            seconds: bt?.seconds || 0
-          })),
-          byAgeGroup: Object.fromEntries(
-            Object.entries(sampleData.personalBests?.byAgeGroup || {}).map(([ageGroup, bestTimes]) => [
-              ageGroup,
-              (Array.isArray(bestTimes) ? bestTimes : []).map(bt => ({
-                event: bt?.event || '',
-                time: bt?.time || '',
-                date: bt?.date || '',
-                meet: bt?.meet || '',
-                courseType: bt?.courseType || 'SCY',
-                seconds: bt?.seconds || 0
-              }))
-            ])
-          )
-        },
-        clubs: (sampleData.clubs || []).map(club => ({
-          name: club?.name || '',
-          location: club?.location || '',
-          years: club?.years || '',
-          meets: club?.meets || 0,
-          events: club?.events || 0,
-          bestTimes: club?.bestTimes || 0,
-          logo: club?.logo || null
-        })),
-        summary: {
-          totalEvents: sampleData.summary?.totalEvents || 0,
-          totalPoints: sampleData.summary?.totalPoints || 0,
-          averagePlace: sampleData.summary?.averagePlace || 0
-        },
-        insights: {
-          strengths: sampleData.insights?.strengths || [],
-          improvements: sampleData.insights?.improvements || [],
-          recommendations: sampleData.insights?.recommendations || []
-        },
-        eventDistribution: sampleData.eventDistribution || {}
-      };
-      
-      try {
-        userService.storeUserData(userId, analysisResult);
-      } catch (storageError) {
-        console.error('Error storing user data:', storageError);
-      }
-      
-      // Add user session info to response
-      const response: AnalyzeResponse = {
-        ...sampleData,
-        userSession: {
-          userId,
-          swimmerName: sampleData.swimmer?.name || 'Sample Swimmer'
-        }
-      };
-
-      return NextResponse.json(response);
-    }
+    // Always use sample data for now to isolate the issue
+    console.log('Using sample data for response');
     
-    // If we have real analysis data, use it
-    console.log('Storing analysis data for user:', userId);
-    
+    let sampleData;
     try {
-      userService.storeUserData(userId, analysis);
-    } catch (storageError) {
-      console.error('Error storing analysis data:', storageError);
+      sampleData = getSampleData();
+      console.log('Sample data retrieved successfully');
+    } catch (sampleError) {
+      console.error('Error getting sample data:', sampleError);
+      return NextResponse.json(
+        { error: 'Error retrieving sample data' } as ErrorResponse,
+        { status: 500 }
+      );
     }
     
-    // Convert AnalysisResult to AnalyzeResponse format with null checks
-    const response: AnalyzeResponse = {
+    // Create minimal response first
+    const minimalResponse: AnalyzeResponse = {
       swimmer: {
-        name: analysis.swimmer?.name || 'Unknown Swimmer',
-        age: analysis.swimmer?.age || 18,
-        totalMeets: analysis.swimmer?.totalMeets || 0,
-        totalEvents: analysis.swimmer?.totalEvents || 0
+        name: 'Test Swimmer',
+        age: 18,
+        totalMeets: 5,
+        totalEvents: 20
       },
       performance: {
-        bestTimes: (analysis.performance?.bestTimes || []).map(bt => ({
-          event: bt?.event || '',
-          time: bt?.time || '',
-          date: bt?.date || '',
-          meet: bt?.meet || '',
-          courseType: bt?.courseType || 'SCY'
-        })),
-        recentTimes: (analysis.performance?.recentTimes || []).map(pt => ({
-          event: pt?.event || '',
-          times: pt?.times || []
-        }))
+        bestTimes: [],
+        recentTimes: []
       },
       meetBreakdown: {
-        meets: (analysis.meetBreakdown?.meets || []).map(meet => ({
-          name: meet?.name || '',
-          date: meet?.date || '',
-          location: meet?.location || '',
-          results: (meet?.results || []).map(r => ({
-            event: r?.event || '',
-            place: r?.place || 0,
-            time: r?.time || '',
-            improvement: r?.improvement || '',
-            ageGroup: r?.ageGroup || ''
-          }))
-        })),
-        currentMeet: analysis.meetBreakdown?.currentMeet || null,
-        allTimeImprovements: (analysis.meetBreakdown?.allTimeImprovements || []).map(imp => ({
-          event: imp?.event || '',
-          improvement: imp?.improvement || '',
-          date: imp?.date || ''
-        })),
-        ageGroupImprovements: Object.fromEntries(
-          Object.entries(analysis.meetBreakdown?.ageGroupImprovements || {}).map(([ageGroup, improvements]) => [
-            ageGroup,
-            (Array.isArray(improvements) ? improvements : []).map(imp => ({
-              event: imp?.event || '',
-              improvement: imp?.improvement || '',
-              rank: imp?.rank || 0
-            }))
-          ])
-        )
+        meets: [],
+        currentMeet: null,
+        allTimeImprovements: [],
+        ageGroupImprovements: {}
       },
       personalBests: {
-        allTime: (analysis.personalBests?.allTime || []).map(bt => ({
-          event: bt?.event || '',
-          time: bt?.time || '',
-          date: bt?.date || '',
-          meet: bt?.meet || '',
-          courseType: bt?.courseType || 'SCY'
-        })),
-        byAgeGroup: Object.fromEntries(
-          Object.entries(analysis.personalBests?.byAgeGroup || {}).map(([ageGroup, bestTimes]) => [
-            ageGroup,
-            (Array.isArray(bestTimes) ? bestTimes : []).map(bt => ({
-              event: bt?.event || '',
-              time: bt?.time || '',
-              date: bt?.date || '',
-              meet: bt?.meet || '',
-              courseType: bt?.courseType || 'SCY'
-            }))
-          ])
-        )
+        allTime: [],
+        byAgeGroup: {}
       },
-      clubs: (analysis.clubs || []).map(club => ({
-        name: club?.name || '',
-        location: club?.location || '',
-        years: club?.years || '',
-        meets: club?.meets || 0,
-        events: club?.events || 0,
-        bestTimes: club?.bestTimes || 0,
-        logo: club?.logo || null
-      })),
+      clubs: [],
       summary: {
-        totalEvents: analysis.summary?.totalEvents || 0,
-        totalPoints: analysis.summary?.totalPoints || 0,
-        averagePlace: analysis.summary?.averagePlace || 0
+        totalEvents: 0,
+        totalPoints: 0,
+        averagePlace: 0
       },
       insights: {
-        strengths: analysis.insights?.strengths || [],
-        improvements: analysis.insights?.improvements || [],
-        recommendations: analysis.insights?.recommendations || []
+        strengths: [],
+        improvements: [],
+        recommendations: []
       },
-      eventDistribution: analysis.eventDistribution || {},
+      eventDistribution: {},
       userSession: {
         userId,
-        swimmerName: analysis.swimmer?.name || 'Unknown Swimmer'
+        swimmerName: 'Test Swimmer'
       }
     };
 
-    return NextResponse.json(response);
+    console.log('Created minimal response');
+    
+    // Try to store minimal data
+    try {
+      console.log('Storing minimal data...');
+      userService.storeUserData(userId, {
+        swimmer: minimalResponse.swimmer,
+        performance: minimalResponse.performance,
+        meetBreakdown: minimalResponse.meetBreakdown,
+        personalBests: minimalResponse.personalBests,
+        clubs: minimalResponse.clubs,
+        summary: minimalResponse.summary,
+        insights: minimalResponse.insights,
+        eventDistribution: minimalResponse.eventDistribution
+      });
+      console.log('Data stored successfully');
+    } catch (storageError) {
+      console.error('Error storing data:', storageError);
+      // Continue anyway
+    }
+
+    console.log('Returning response...');
+    
+    // Convert to JSON string to check size
+    const responseJson = JSON.stringify(minimalResponse);
+    console.log('Response JSON length:', responseJson.length);
+    console.log('Response JSON preview:', responseJson.substring(0, 200) + '...');
+    
+    return NextResponse.json(minimalResponse);
 
   } catch (error) {
-    console.error('Analyze POST error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' } as ErrorResponse,
-      { status: 500 }
-    );
+    console.error('=== CRITICAL ERROR ===');
+    console.error('Error type:', error.constructor.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    
+    // Return a very simple error response
+    try {
+      return NextResponse.json(
+        { error: 'Internal server error' },
+        { status: 500 }
+      );
+    } catch (responseError) {
+      console.error('Error creating error response:', responseError);
+      // Last resort - return a basic Response
+      return new Response('Internal server error', { status: 500 });
+    }
   }
 }
