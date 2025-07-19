@@ -12,12 +12,23 @@ export default function DashboardPage() {
   const [analysisData, setAnalysisData] = useState<AnalyzeResponse | null>(null)
   const [userSession, setUserSession] = useState<SessionResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isClient, setIsClient] = useState(false)
   const router = useRouter()
+
+  // Client-side rendering check
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   // Check for existing session on app load
   useEffect(() => {
     const checkSession = async () => {
       try {
+        // Check if we're on the client side before accessing localStorage
+        if (typeof window === 'undefined') {
+          return
+        }
+        
         const userId = localStorage.getItem('userId')
         if (!userId) {
           router.push('/')
@@ -67,6 +78,11 @@ export default function DashboardPage() {
 
   const handleClearSession = useCallback(async () => {
     try {
+      // Check if we're on the client side before accessing localStorage
+      if (typeof window === 'undefined') {
+        return
+      }
+      
       const userId = localStorage.getItem('userId')
       if (userId) {
         await fetch('/api/session', {
@@ -96,6 +112,10 @@ export default function DashboardPage() {
       </div>
     </div>
   ), [])
+
+  if (!isClient) {
+    return loadingScreen
+  }
 
   if (isLoading) {
     return loadingScreen

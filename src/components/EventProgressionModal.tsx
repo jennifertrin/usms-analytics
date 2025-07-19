@@ -1,7 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Plot from 'react-plotly.js'
+import dynamic from 'next/dynamic'
+
+// Dynamically import Plotly to avoid SSR issues
+const Plot = dynamic(() => import('react-plotly.js'), {
+  ssr: false,
+  loading: () => <div className="w-full h-64 bg-gray-100 animate-pulse rounded-lg"></div>
+})
 
 interface EventProgressionModalProps {
   isOpen: boolean
@@ -19,9 +25,15 @@ interface TimeEntry {
 
 const EventProgressionModal = ({ isOpen, onClose, eventName, analysisData }: EventProgressionModalProps) => {
   const [progressionData, setProgressionData] = useState<TimeEntry[]>([])
+  const [isClient, setIsClient] = useState(false)
 
   console.log('analysisData', analysisData);
   console.log('progressionData', progressionData)
+
+  // Client-side rendering check
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   // Handle click outside to close
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -330,30 +342,36 @@ const EventProgressionModal = ({ isOpen, onClose, eventName, analysisData }: Eve
             <div className="space-y-6">
               {/* Chart */}
               <div className="bg-slate-50 rounded-2xl p-4">
-                <Plot
-                  data={chartData}
-                  layout={{
-                    height: 400,
-                    margin: { t: 20, b: 60, l: 80, r: 20 },
-                    xaxis: { 
-                      title: { text: 'Date', font: { size: 14 } },
-                      gridcolor: 'rgba(0,0,0,0.1)'
-                    },
-                    yaxis: { 
-                      title: { text: 'Time (seconds)', font: { size: 14 } },
-                      autorange: 'reversed',
-                      gridcolor: 'rgba(0,0,0,0.1)'
-                    },
-                    title: { text: '' },
-                    paper_bgcolor: 'rgba(0,0,0,0)',
-                    plot_bgcolor: 'rgba(0,0,0,0)',
-                    font: { size: 12 },
-                    hovermode: 'closest'
-                  }}
-                  config={{ displayModeBar: false }}
-                  useResizeHandler={true}
-                  style={{ width: '100%', height: '100%' }}
-                />
+                {isClient && chartData.length > 0 ? (
+                  <Plot
+                    data={chartData}
+                    layout={{
+                      height: 400,
+                      margin: { t: 20, b: 60, l: 80, r: 20 },
+                      xaxis: { 
+                        title: { text: 'Date', font: { size: 14 } },
+                        gridcolor: 'rgba(0,0,0,0.1)'
+                      },
+                      yaxis: { 
+                        title: { text: 'Time (seconds)', font: { size: 14 } },
+                        autorange: 'reversed',
+                        gridcolor: 'rgba(0,0,0,0.1)'
+                      },
+                      title: { text: '' },
+                      paper_bgcolor: 'rgba(0,0,0,0)',
+                      plot_bgcolor: 'rgba(0,0,0,0)',
+                      font: { size: 12 },
+                      hovermode: 'closest'
+                    }}
+                    config={{ displayModeBar: false }}
+                    useResizeHandler={true}
+                    style={{ width: '100%', height: '100%' }}
+                  />
+                ) : (
+                  <div className="w-full h-64 bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">
+                    <span className="text-gray-500">Loading chart...</span>
+                  </div>
+                )}
               </div>
 
               {/* Data Table */}

@@ -1,7 +1,13 @@
 'use client'
 
-import { useState } from 'react'
-import Plot from 'react-plotly.js'
+import { useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
+
+// Dynamically import Plotly to avoid SSR issues
+const Plot = dynamic(() => import('react-plotly.js'), {
+  ssr: false,
+  loading: () => <div className="w-full h-64 bg-gray-100 animate-pulse rounded-lg"></div>
+})
 
 interface MeetBreakdownProps {
   analysisData: any
@@ -9,6 +15,12 @@ interface MeetBreakdownProps {
 
 const MeetBreakdown = ({ analysisData }: MeetBreakdownProps) => {
   const [selectedMeet, setSelectedMeet] = useState<string>('all')
+  const [isClient, setIsClient] = useState(false)
+
+  // Client-side rendering check
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
   
   // Use real data from analysisData
   const meetBreakdown = analysisData?.meetBreakdown || {}
@@ -125,52 +137,65 @@ const MeetBreakdown = ({ analysisData }: MeetBreakdownProps) => {
           <span className="text-xl sm:text-2xl"></span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
-          <Plot
-            data={meetPerformanceData}
-            layout={{
-              height: 350,
-              margin: { t: 20, b: 50, l: 60, r: 20 },
-              xaxis: { 
-                title: { text: 'Meet', font: { size: 14 } },
-                gridcolor: 'rgba(0,0,0,0.1)'
-              },
-              yaxis: { 
-                title: { text: 'Count', font: { size: 14 } },
-                gridcolor: 'rgba(0,0,0,0.1)'
-              },
-              barmode: 'group',
-              title: { text: '' },
-              paper_bgcolor: 'rgba(0,0,0,0)',
-              plot_bgcolor: 'rgba(0,0,0,0)',
-              font: { size: 12 }
-            }}
-            config={{ displayModeBar: false }}
-            useResizeHandler={true}
-            style={{ width: '100%', height: '100%' }}
-          />
-          <Plot
-            data={averagePlaceData}
-            layout={{
-              height: 350,
-              margin: { t: 20, b: 50, l: 60, r: 20 },
-              xaxis: { 
-                title: { text: 'Meet', font: { size: 14 } },
-                gridcolor: 'rgba(0,0,0,0.1)'
-              },
-              yaxis: { 
-                title: { text: 'Average Place', font: { size: 14 } },
-                autorange: 'reversed',
-                gridcolor: 'rgba(0,0,0,0.1)'
-              },
-              title: { text: '' },
-              paper_bgcolor: 'rgba(0,0,0,0)',
-              plot_bgcolor: 'rgba(0,0,0,0)',
-              font: { size: 12 }
-            }}
-            config={{ displayModeBar: false }}
-            useResizeHandler={true}
-            style={{ width: '100%', height: '100%' }}
-          />
+          {isClient ? (
+            <>
+              <Plot
+                data={meetPerformanceData}
+                layout={{
+                  height: 350,
+                  margin: { t: 20, b: 50, l: 60, r: 20 },
+                  xaxis: { 
+                    title: { text: 'Meet', font: { size: 14 } },
+                    gridcolor: 'rgba(0,0,0,0.1)'
+                  },
+                  yaxis: { 
+                    title: { text: 'Count', font: { size: 14 } },
+                    gridcolor: 'rgba(0,0,0,0.1)'
+                  },
+                  barmode: 'group',
+                  title: { text: '' },
+                  paper_bgcolor: 'rgba(0,0,0,0)',
+                  plot_bgcolor: 'rgba(0,0,0,0)',
+                  font: { size: 12 }
+                }}
+                config={{ displayModeBar: false }}
+                useResizeHandler={true}
+                style={{ width: '100%', height: '100%' }}
+              />
+              <Plot
+                data={averagePlaceData}
+                layout={{
+                  height: 350,
+                  margin: { t: 20, b: 50, l: 60, r: 20 },
+                  xaxis: { 
+                    title: { text: 'Meet', font: { size: 14 } },
+                    gridcolor: 'rgba(0,0,0,0.1)'
+                  },
+                  yaxis: { 
+                    title: { text: 'Average Place', font: { size: 14 } },
+                    autorange: 'reversed',
+                    gridcolor: 'rgba(0,0,0,0.1)'
+                  },
+                  title: { text: '' },
+                  paper_bgcolor: 'rgba(0,0,0,0)',
+                  plot_bgcolor: 'rgba(0,0,0,0)',
+                  font: { size: 12 }
+                }}
+                config={{ displayModeBar: false }}
+                useResizeHandler={true}
+                style={{ width: '100%', height: '100%' }}
+              />
+            </>
+          ) : (
+            <>
+              <div className="w-full h-64 bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">
+                <span className="text-gray-500">Loading chart...</span>
+              </div>
+              <div className="w-full h-64 bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">
+                <span className="text-gray-500">Loading chart...</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
