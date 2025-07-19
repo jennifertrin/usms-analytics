@@ -1,11 +1,9 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import axios from 'axios'
 
-// API base URL from environment variables
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000'
+
 
 interface HomePageProps {
   analysisData: any
@@ -31,21 +29,31 @@ const HomePage = ({ analysisData, userSession, onClearSession, setAnalysisData }
     setError('')
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/analyze`, {
-        usmsLink: usmsLink.trim()
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          usmsLink: usmsLink.trim()
+        })
       })
 
-      if (response.data) {
-        setAnalysisData(response.data)
+      if (response.ok) {
+        const data = await response.json()
+        setAnalysisData(data)
         router.push('/dashboard')
+      } else {
+        const errorData = await response.json()
+        setError(errorData.error || 'Failed to analyze USMS results. Please try again.')
       }
     } catch (error: any) {
       console.error('Analysis error:', error)
-      setError(error.response?.data?.error || 'Failed to analyze USMS results. Please try again.')
+      setError('Failed to analyze USMS results. Please try again.')
     } finally {
       setIsAnalyzing(false)
     }
-  }, [usmsLink, API_BASE_URL, setAnalysisData, router])
+  }, [usmsLink, setAnalysisData, router])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">

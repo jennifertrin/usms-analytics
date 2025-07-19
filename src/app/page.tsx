@@ -1,18 +1,89 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import HomePage from '@/components/HomePage'
+import Dashboard from '@/components/Dashboard'
+import { AnalyzeResponse, SessionResponse } from '@/types/api'
 
-export default function HomePage() {
+export default function App() {
+  const [analysisData, setAnalysisData] = useState<AnalyzeResponse | null>(null)
+  const [userSession, setUserSession] = useState<SessionResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 1000)
+    // Check for existing session on app load
+    const checkSession = async () => {
+      try {
+        const userId = localStorage.getItem('userId')
+        if (userId) {
+          // Check if user has data
+          const response = await fetch('/api/session', {
+            headers: {
+              'X-User-ID': userId
+            }
+          })
+          
+          if (response.ok) {
+            const sessionData = await response.json()
+            setUserSession(sessionData)
+            
+            // If user has data, fetch it
+            if (sessionData.hasData) {
+              const dataResponse = await fetch('/api/data', {
+                headers: {
+                  'X-User-ID': userId
+                }
+              })
+              
+              if (dataResponse.ok) {
+                const data = await dataResponse.json()
+                setAnalysisData(data)
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Session check error:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
 
-    return () => clearTimeout(timer)
+    checkSession()
   }, [])
+
+  const handleClearSession = async () => {
+    try {
+      const userId = localStorage.getItem('userId')
+      if (userId) {
+        await fetch('/api/session', {
+          method: 'DELETE',
+          headers: {
+            'X-User-ID': userId
+          }
+        })
+      }
+      
+      localStorage.removeItem('userId')
+      setAnalysisData(null)
+      setUserSession(null)
+    } catch (error) {
+      console.error('Clear session error:', error)
+    }
+  }
+
+  const handleSetAnalysisData = (data: AnalyzeResponse) => {
+    setAnalysisData(data)
+    if (data.userSession) {
+      localStorage.setItem('userId', data.userSession.userId)
+      setUserSession({
+        userId: data.userSession.userId,
+        hasData: true,
+        swimmerName: data.userSession.swimmerName,
+        newSession: false
+      })
+    }
+  }
 
   if (isLoading) {
     return (
@@ -27,36 +98,23 @@ export default function HomePage() {
     )
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
-      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        <div className="max-w-5xl mx-auto">
-          <div className="bg-white/90 backdrop-blur-xl border border-white/50 rounded-3xl shadow-xl p-6 sm:p-8 text-center">
-            <div className="mb-6 sm:mb-10">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-xl">
-                <span className="text-2xl sm:text-3xl">🏊‍♂️</span>
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent mb-3">
-                Swimming Performance Analytics
-              </h2>
-              <p className="text-base sm:text-lg text-slate-600 mb-4 sm:mb-6 px-4">
-                Get comprehensive performance insights from your USMS results
-              </p>
-            </div>
+  // Show dashboard if we have analysis data, otherwise show home page
+  if (analysisData) {
+    return (
+      <Dashboard 
+        analysisData={analysisData}
+        userSession={userSession}
+        onClearSession={handleClearSession}
+      />
+    )
+  }
 
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-3xl p-4 sm:p-8 mb-6 sm:mb-10 border-2 border-blue-100 shadow-lg">
-              <div className="max-w-2xl mx-auto">
-                <p className="text-sm text-slate-500 mb-4">
-                  Next.js conversion successful! 🎉
-                </p>
-                <p className="text-lg font-semibold text-slate-700">
-                  The USMS Analytics app has been successfully converted to Next.js.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+  return (
+    <HomePage 
+      analysisData={analysisData}
+      userSession={userSession}
+      onClearSession={handleClearSession}
+      setAnalysisData={handleSetAnalysisData}
+    />
   )
 } 
