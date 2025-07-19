@@ -1,38 +1,35 @@
 {
-  "name": "usms-analytics-monorepo",
+  "name": "usms-analytics",
   "version": "1.0.0",
   "description": "USMS Analytics - Swimming Performance Analysis Platform",
   "private": true,
-  "workspaces": [
-    "client"
-  ],
   "scripts": {
-    "dev": "concurrently \"pnpm run dev:server\" \"pnpm run dev:client\"",
-    "dev:server": "cd server && source venv/bin/activate && python3 app.py",
-    "dev:client": "cd client && npm run dev",
-    "install:all": "pnpm install && cd client && pnpm install && pnpm run setup:python",
-    "setup:python": "cd server && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt",
-    "start": "cd server && source venv/bin/activate && python app.py",
-    "test": "cd server && source venv/bin/activate && python run_tests.py",
-    "clean:python": "cd server && rm -rf venv",
-    "build": "pnpm run build",
-    "vercel-build": "echo 'Starting Vercel build...' && cd client && pnpm install --frozen-lockfile && echo 'Dependencies installed. Building...' && pnpm run build && echo 'Build completed. Contents of dist:' && ls -la dist && echo 'Checking for index.html:' && ls -la dist/index.html"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "^14.0.0",
+    "plotly.js": "^2.27.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "react-plotly.js": "^2.6.0"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
-  },
-  "overrides": {
-    "optionalDependencies": {
-      "@rollup/rollup-linux-x64-gnu": "4.9.5",
-      "@rollup/rollup-linux-x64-musl": "4.9.5",
-      "@rollup/rollup-darwin-x64": "4.9.5",
-      "@rollup/rollup-darwin-arm64": "4.9.5",
-      "@rollup/rollup-win32-x64-msvc": "4.9.5"
-    }
+    "@tailwindcss/forms": "^0.5.0",
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "@types/react-plotly.js": "^2.6.3",
+    "autoprefixer": "^10.4.0",
+    "eslint": "^8.0.0",
+    "eslint-config-next": "^14.0.0",
+    "postcss": "^8.4.0",
+    "tailwindcss": "^3.3.0",
+    "typescript": "^5.0.0"
   },
   "engines": {
-    "node": "22.0.0",
-    "npm": ">=8.0.0",
-    "python": ">=3.8.0"
+    "node": ">=18.0.0"
   }
 }

@@ -1,16 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  env: {
-    API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:5000',
-  },
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: `${process.env.API_BASE_URL || 'http://localhost:5000'}/api/:path*`,
-      },
-    ]
-  },
+  // Disable static generation to avoid SSR issues with client-side code
+  output: 'standalone',
+  // Remove the API proxy since we're using Next.js API routes
+  // The API routes are now handled directly by Next.js in src/app/api/
 }
 
 module.exports = nextConfig 

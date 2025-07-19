@@ -4,6 +4,9 @@ import { userService } from '@/lib/userService';
 import { analysisService } from '@/lib/analysisService';
 import { getSampleData } from '@/lib/sampleData';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeResponse | ErrorResponse>> {
   try {
     // Get user ID from headers (Vercel-compatible session management)

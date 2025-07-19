@@ -5,6 +5,9 @@ import HomePage from '@/components/HomePage'
 import Dashboard from '@/components/Dashboard'
 import { AnalyzeResponse, SessionResponse } from '@/types/api'
 
+// Force dynamic rendering to avoid SSR issues with localStorage
+export const dynamic = 'force-dynamic';
+
 export default function App() {
   const [analysisData, setAnalysisData] = useState<AnalyzeResponse | null>(null)
   const [userSession, setUserSession] = useState<SessionResponse | null>(null)

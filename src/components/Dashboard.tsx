@@ -1,10 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Plot from 'react-plotly.js'
+import dynamic from 'next/dynamic'
 import MeetBreakdown from './MeetBreakdown'
 import PersonalBests from './PersonalBests'
+
+// Dynamically import Plotly to avoid SSR issues
+const Plot = dynamic(() => import('react-plotly.js'), {
+  ssr: false,
+  loading: () => <div className="w-full h-64 bg-gray-100 animate-pulse rounded-lg"></div>
+})
 
 interface DashboardProps {
   analysisData: any
@@ -45,6 +51,13 @@ const Dashboard = ({ analysisData, userSession, onClearSession }: DashboardProps
 
   // Use real event distribution data from analysisData
   const eventDistribution = analysisData?.eventDistribution || {}
+  
+  // Client-side rendering check
+  const [isClient, setIsClient] = useState(false)
+  
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: '📊', description: 'Dashboard summary' },
@@ -174,7 +187,7 @@ const Dashboard = ({ analysisData, userSession, onClearSession }: DashboardProps
                     <h3 className="text-lg sm:text-xl font-black bg-gradient-to-r from-slate-600 to-slate-800 bg-clip-text text-transparent">Event Distribution</h3>
                   </div>
                   
-                  {Object.keys(eventDistribution).length > 0 ? (
+                  {Object.keys(eventDistribution).length > 0 && isClient ? (
                     <div className="w-full h-full flex justify-center items-center">
                       <Plot
                         data={[{
@@ -264,7 +277,7 @@ const Dashboard = ({ analysisData, userSession, onClearSession }: DashboardProps
                       <h3 className="text-lg sm:text-xl font-black bg-gradient-to-r from-slate-600 to-slate-800 bg-clip-text text-transparent">Performance Trends</h3>
                     </div>
                     
-                    {performanceChartData.length > 0 ? (
+                    {performanceChartData.length > 0 && isClient ? (
                       <Plot
                         data={performanceChartData}
                         layout={{
@@ -312,7 +325,7 @@ const Dashboard = ({ analysisData, userSession, onClearSession }: DashboardProps
                     <h3 className="text-lg sm:text-xl font-black bg-gradient-to-r from-slate-600 to-slate-800 bg-clip-text text-transparent">Performance Trends</h3>
                   </div>
                   
-                  {performanceChartData.length > 0 ? (
+                  {performanceChartData.length > 0 && isClient ? (
                     <Plot
                       data={performanceChartData}
                       layout={{

@@ -11,7 +11,19 @@ __pycache__/
 
 # Node modules (will be installed by Vercel)
 node_modules/
-client/node_modules/
+
+# Old client directory (replaced by Next.js)
+client/
+
+# Old server directory (replaced by Next.js API routes)
+server/
+
+# Old API directory (replaced by Next.js API routes)
+api/
+
+# Old build artifacts
+dist/
+build/
 
 # Development files
 *.log

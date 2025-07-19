@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { SessionResponse, CreateSessionResponse, ErrorResponse } from '@/types/api';
 import { userService } from '@/lib/userService';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest): Promise<NextResponse<SessionResponse | ErrorResponse>> {
   try {
     const userId = request.headers.get('X-User-ID');

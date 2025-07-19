@@ -3,23 +3,14 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Dashboard from '@/components/Dashboard'
-import axios from 'axios'
+import { SessionResponse, AnalyzeResponse } from '@/types/api'
 
-// Configure axios to include credentials for session management
-axios.defaults.withCredentials = true
-
-// API base URL from environment variables
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000'
-
-interface UserSession {
-  user_id: string
-  has_data: boolean
-  swimmer_name: string | null
-}
+// Force dynamic rendering to avoid SSR issues with localStorage
+export const dynamic = 'force-dynamic';
 
 export default function DashboardPage() {
-  const [analysisData, setAnalysisData] = useState(null)
-  const [userSession, setUserSession] = useState<UserSession | null>(null)
+  const [analysisData, setAnalysisData] = useState<AnalyzeResponse | null>(null)
+  const [userSession, setUserSession] = useState<SessionResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
@@ -27,15 +18,40 @@ export default function DashboardPage() {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/session`)
-        setUserSession(response.data)
+        const userId = localStorage.getItem('userId')
+        if (!userId) {
+          router.push('/')
+          return
+        }
+
+        const response = await fetch('/api/session', {
+          headers: {
+            'X-User-ID': userId
+          }
+        })
         
-        // If user has data, fetch it
-        if (response.data.has_data) {
-          const dataResponse = await axios.get(`${API_BASE_URL}/api/data`)
-          setAnalysisData(dataResponse.data)
+        if (response.ok) {
+          const sessionData = await response.json()
+          setUserSession(sessionData)
+          
+          // If user has data, fetch it
+          if (sessionData.hasData) {
+            const dataResponse = await fetch('/api/data', {
+              headers: {
+                'X-User-ID': userId
+              }
+            })
+            
+            if (dataResponse.ok) {
+              const data = await dataResponse.json()
+              setAnalysisData(data)
+            }
+          } else {
+            // No data, redirect to home
+            router.push('/')
+          }
         } else {
-          // No data, redirect to home
+          // No active session, redirect to home
           router.push('/')
         }
       } catch (error) {
@@ -47,18 +63,28 @@ export default function DashboardPage() {
     }
 
     checkSession()
-  }, [API_BASE_URL, router])
+  }, [router])
 
   const handleClearSession = useCallback(async () => {
     try {
-      await axios.delete(`${API_BASE_URL}/api/session`)
+      const userId = localStorage.getItem('userId')
+      if (userId) {
+        await fetch('/api/session', {
+          method: 'DELETE',
+          headers: {
+            'X-User-ID': userId
+          }
+        })
+      }
+      
+      localStorage.removeItem('userId')
       setAnalysisData(null)
       setUserSession(null)
       router.push('/')
     } catch (error) {
       console.error('Error clearing session:', error)
     }
-  }, [API_BASE_URL, router])
+  }, [router])
 
   const loadingScreen = useMemo(() => (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
