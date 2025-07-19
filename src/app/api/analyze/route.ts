@@ -9,6 +9,15 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeResponse | ErrorResponse>> {
   try {
+    // Validate request has proper content type
+    const contentType = request.headers.get('content-type');
+    if (!contentType?.includes('application/json')) {
+      return NextResponse.json(
+        { error: 'Content-Type must be application/json' } as ErrorResponse,
+        { status: 400 }
+      );
+    }
+
     // Get user ID from headers (Vercel-compatible session management)
     let userId = request.headers.get('X-User-ID');
     if (!userId) {
@@ -21,7 +30,18 @@ export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeRe
       }
     }
     
-    const body = await request.json();
+    // Safely parse request body
+    let body;
+    try {
+      body = await request.json();
+    } catch (jsonError) {
+      console.error('JSON parsing error:', jsonError);
+      return NextResponse.json(
+        { error: 'Invalid JSON in request body' } as ErrorResponse,
+        { status: 400 }
+      );
+    }
+
     const { usmsLink }: AnalyzeRequest = body;
     
     if (!usmsLink) {
@@ -31,8 +51,16 @@ export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeRe
       );
     }
 
-        // Try to scrape and analyze the USMS results
-    const analysis = await analysisService.analyzeUSMSResults(usmsLink);
+    console.log('Analyzing USMS link:', usmsLink, 'for user:', userId);
+
+    // Try to scrape and analyze the USMS results
+    let analysis;
+    try {
+      analysis = await analysisService.analyzeUSMSResults(usmsLink);
+    } catch (analysisError) {
+      console.error('Analysis service error:', analysisError);
+      analysis = null;
+    }
     
     // If analysis fails, fall back to sample data for demonstration
     if (!analysis) {
@@ -42,108 +70,112 @@ export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeRe
       // Store sample data for this user
       const analysisResult = {
         swimmer: {
-          name: sampleData.swimmer.name,
-          age: sampleData.swimmer.age,
-          totalMeets: sampleData.swimmer.totalMeets,
-          totalEvents: sampleData.swimmer.totalEvents
+          name: sampleData.swimmer?.name || 'Sample Swimmer',
+          age: sampleData.swimmer?.age || 18,
+          totalMeets: sampleData.swimmer?.totalMeets || 0,
+          totalEvents: sampleData.swimmer?.totalEvents || 0
         },
         performance: {
-          bestTimes: sampleData.performance.bestTimes.map(bt => ({
-            event: bt.event,
-            time: bt.time,
-            date: bt.date,
-            meet: bt.meet,
-            courseType: bt.courseType,
-            seconds: 0 // Placeholder
+          bestTimes: (sampleData.performance?.bestTimes || []).map(bt => ({
+            event: bt?.event || '',
+            time: bt?.time || '',
+            date: bt?.date || '',
+            meet: bt?.meet || '',
+            courseType: bt?.courseType || 'SCY',
+            seconds: bt?.seconds || 0
           })),
-          recentTimes: sampleData.performance.recentTimes.map(pt => ({
-            event: pt.event,
-            times: pt.times
+          recentTimes: (sampleData.performance?.recentTimes || []).map(pt => ({
+            event: pt?.event || '',
+            times: pt?.times || []
           }))
         },
         meetBreakdown: {
-          meets: sampleData.meetBreakdown.meets.map(meet => ({
-            name: meet.name,
-            date: meet.date,
-            location: meet.location,
-            results: meet.results.map(r => ({
-              event: r.event,
-              place: r.place,
-              time: r.time,
-              improvement: r.improvement,
-              ageGroup: r.ageGroup
+          meets: (sampleData.meetBreakdown?.meets || []).map(meet => ({
+            name: meet?.name || '',
+            date: meet?.date || '',
+            location: meet?.location || '',
+            results: (meet?.results || []).map(r => ({
+              event: r?.event || '',
+              place: r?.place || 0,
+              time: r?.time || '',
+              improvement: r?.improvement || '',
+              ageGroup: r?.ageGroup || ''
             }))
           })),
-          currentMeet: sampleData.meetBreakdown.currentMeet,
-          allTimeImprovements: sampleData.meetBreakdown.allTimeImprovements.map(imp => ({
-            event: imp.event,
-            improvement: imp.improvement,
-            date: imp.date
+          currentMeet: sampleData.meetBreakdown?.currentMeet || null,
+          allTimeImprovements: (sampleData.meetBreakdown?.allTimeImprovements || []).map(imp => ({
+            event: imp?.event || '',
+            improvement: imp?.improvement || '',
+            date: imp?.date || ''
           })),
           ageGroupImprovements: Object.fromEntries(
-            Object.entries(sampleData.meetBreakdown.ageGroupImprovements).map(([ageGroup, improvements]) => [
+            Object.entries(sampleData.meetBreakdown?.ageGroupImprovements || {}).map(([ageGroup, improvements]) => [
               ageGroup,
-              (improvements as any[]).map(imp => ({
-                event: imp.event,
-                improvement: imp.improvement,
-                rank: imp.rank
+              (Array.isArray(improvements) ? improvements : []).map(imp => ({
+                event: imp?.event || '',
+                improvement: imp?.improvement || '',
+                rank: imp?.rank || 0
               }))
             ])
           )
         },
         personalBests: {
-          allTime: sampleData.personalBests.allTime.map(bt => ({
-            event: bt.event,
-            time: bt.time,
-            date: bt.date,
-            meet: bt.meet,
-            courseType: bt.courseType,
-            seconds: 0 // Placeholder
+          allTime: (sampleData.personalBests?.allTime || []).map(bt => ({
+            event: bt?.event || '',
+            time: bt?.time || '',
+            date: bt?.date || '',
+            meet: bt?.meet || '',
+            courseType: bt?.courseType || 'SCY',
+            seconds: bt?.seconds || 0
           })),
           byAgeGroup: Object.fromEntries(
-            Object.entries(sampleData.personalBests.byAgeGroup).map(([ageGroup, bestTimes]) => [
+            Object.entries(sampleData.personalBests?.byAgeGroup || {}).map(([ageGroup, bestTimes]) => [
               ageGroup,
-              (bestTimes as any[]).map(bt => ({
-                event: bt.event,
-                time: bt.time,
-                date: bt.date,
-                meet: bt.meet,
-                courseType: bt.courseType,
-                seconds: 0 // Placeholder
+              (Array.isArray(bestTimes) ? bestTimes : []).map(bt => ({
+                event: bt?.event || '',
+                time: bt?.time || '',
+                date: bt?.date || '',
+                meet: bt?.meet || '',
+                courseType: bt?.courseType || 'SCY',
+                seconds: bt?.seconds || 0
               }))
             ])
           )
         },
-        clubs: sampleData.clubs.map(club => ({
-          name: club.name,
-          location: club.location,
-          years: club.years,
-          meets: club.meets,
-          events: club.events,
-          bestTimes: club.bestTimes,
-          logo: club.logo
+        clubs: (sampleData.clubs || []).map(club => ({
+          name: club?.name || '',
+          location: club?.location || '',
+          years: club?.years || '',
+          meets: club?.meets || 0,
+          events: club?.events || 0,
+          bestTimes: club?.bestTimes || 0,
+          logo: club?.logo || null
         })),
         summary: {
-          totalEvents: sampleData.summary.totalEvents,
-          totalPoints: sampleData.summary.totalPoints,
-          averagePlace: sampleData.summary.averagePlace
+          totalEvents: sampleData.summary?.totalEvents || 0,
+          totalPoints: sampleData.summary?.totalPoints || 0,
+          averagePlace: sampleData.summary?.averagePlace || 0
         },
         insights: {
-          strengths: sampleData.insights.strengths,
-          improvements: sampleData.insights.improvements,
-          recommendations: sampleData.insights.recommendations
+          strengths: sampleData.insights?.strengths || [],
+          improvements: sampleData.insights?.improvements || [],
+          recommendations: sampleData.insights?.recommendations || []
         },
-        eventDistribution: sampleData.eventDistribution
+        eventDistribution: sampleData.eventDistribution || {}
       };
       
-      userService.storeUserData(userId, analysisResult);
+      try {
+        userService.storeUserData(userId, analysisResult);
+      } catch (storageError) {
+        console.error('Error storing user data:', storageError);
+      }
       
       // Add user session info to response
       const response: AnalyzeResponse = {
         ...sampleData,
         userSession: {
           userId,
-          swimmerName: sampleData.swimmer.name
+          swimmerName: sampleData.swimmer?.name || 'Sample Swimmer'
         }
       };
 
@@ -152,103 +184,108 @@ export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeRe
     
     // If we have real analysis data, use it
     console.log('Storing analysis data for user:', userId);
-    userService.storeUserData(userId, analysis);
     
-    // Convert AnalysisResult to AnalyzeResponse format
+    try {
+      userService.storeUserData(userId, analysis);
+    } catch (storageError) {
+      console.error('Error storing analysis data:', storageError);
+    }
+    
+    // Convert AnalysisResult to AnalyzeResponse format with null checks
     const response: AnalyzeResponse = {
       swimmer: {
-        name: analysis.swimmer.name,
-        age: analysis.swimmer.age,
-        totalMeets: analysis.swimmer.totalMeets,
-        totalEvents: analysis.swimmer.totalEvents
+        name: analysis.swimmer?.name || 'Unknown Swimmer',
+        age: analysis.swimmer?.age || 18,
+        totalMeets: analysis.swimmer?.totalMeets || 0,
+        totalEvents: analysis.swimmer?.totalEvents || 0
       },
       performance: {
-        bestTimes: analysis.performance.bestTimes.map(bt => ({
-          event: bt.event,
-          time: bt.time,
-          date: bt.date,
-          meet: bt.meet,
-          courseType: bt.courseType
+        bestTimes: (analysis.performance?.bestTimes || []).map(bt => ({
+          event: bt?.event || '',
+          time: bt?.time || '',
+          date: bt?.date || '',
+          meet: bt?.meet || '',
+          courseType: bt?.courseType || 'SCY'
         })),
-        recentTimes: analysis.performance.recentTimes.map(pt => ({
-          event: pt.event,
-          times: pt.times
+        recentTimes: (analysis.performance?.recentTimes || []).map(pt => ({
+          event: pt?.event || '',
+          times: pt?.times || []
         }))
       },
       meetBreakdown: {
-        meets: analysis.meetBreakdown.meets.map(meet => ({
-          name: meet.name,
-          date: meet.date,
-          location: meet.location,
-          results: meet.results.map(r => ({
-            event: r.event,
-            place: r.place,
-            time: r.time,
-            improvement: r.improvement,
-            ageGroup: r.ageGroup
+        meets: (analysis.meetBreakdown?.meets || []).map(meet => ({
+          name: meet?.name || '',
+          date: meet?.date || '',
+          location: meet?.location || '',
+          results: (meet?.results || []).map(r => ({
+            event: r?.event || '',
+            place: r?.place || 0,
+            time: r?.time || '',
+            improvement: r?.improvement || '',
+            ageGroup: r?.ageGroup || ''
           }))
         })),
-        currentMeet: analysis.meetBreakdown.currentMeet,
-        allTimeImprovements: analysis.meetBreakdown.allTimeImprovements.map(imp => ({
-          event: imp.event,
-          improvement: imp.improvement,
-          date: imp.date
+        currentMeet: analysis.meetBreakdown?.currentMeet || null,
+        allTimeImprovements: (analysis.meetBreakdown?.allTimeImprovements || []).map(imp => ({
+          event: imp?.event || '',
+          improvement: imp?.improvement || '',
+          date: imp?.date || ''
         })),
         ageGroupImprovements: Object.fromEntries(
-          Object.entries(analysis.meetBreakdown.ageGroupImprovements).map(([ageGroup, improvements]) => [
+          Object.entries(analysis.meetBreakdown?.ageGroupImprovements || {}).map(([ageGroup, improvements]) => [
             ageGroup,
-            (improvements as any[]).map(imp => ({
-              event: imp.event,
-              improvement: imp.improvement,
-              rank: imp.rank
+            (Array.isArray(improvements) ? improvements : []).map(imp => ({
+              event: imp?.event || '',
+              improvement: imp?.improvement || '',
+              rank: imp?.rank || 0
             }))
           ])
         )
       },
       personalBests: {
-        allTime: analysis.personalBests.allTime.map(bt => ({
-          event: bt.event,
-          time: bt.time,
-          date: bt.date,
-          meet: bt.meet,
-          courseType: bt.courseType
+        allTime: (analysis.personalBests?.allTime || []).map(bt => ({
+          event: bt?.event || '',
+          time: bt?.time || '',
+          date: bt?.date || '',
+          meet: bt?.meet || '',
+          courseType: bt?.courseType || 'SCY'
         })),
         byAgeGroup: Object.fromEntries(
-          Object.entries(analysis.personalBests.byAgeGroup).map(([ageGroup, bestTimes]) => [
+          Object.entries(analysis.personalBests?.byAgeGroup || {}).map(([ageGroup, bestTimes]) => [
             ageGroup,
-            (bestTimes as any[]).map(bt => ({
-              event: bt.event,
-              time: bt.time,
-              date: bt.date,
-              meet: bt.meet,
-              courseType: bt.courseType
+            (Array.isArray(bestTimes) ? bestTimes : []).map(bt => ({
+              event: bt?.event || '',
+              time: bt?.time || '',
+              date: bt?.date || '',
+              meet: bt?.meet || '',
+              courseType: bt?.courseType || 'SCY'
             }))
           ])
         )
       },
-      clubs: analysis.clubs.map(club => ({
-        name: club.name,
-        location: club.location,
-        years: club.years,
-        meets: club.meets,
-        events: club.events,
-        bestTimes: club.bestTimes,
-        logo: club.logo
+      clubs: (analysis.clubs || []).map(club => ({
+        name: club?.name || '',
+        location: club?.location || '',
+        years: club?.years || '',
+        meets: club?.meets || 0,
+        events: club?.events || 0,
+        bestTimes: club?.bestTimes || 0,
+        logo: club?.logo || null
       })),
       summary: {
-        totalEvents: analysis.summary.totalEvents,
-        totalPoints: analysis.summary.totalPoints,
-        averagePlace: analysis.summary.averagePlace
+        totalEvents: analysis.summary?.totalEvents || 0,
+        totalPoints: analysis.summary?.totalPoints || 0,
+        averagePlace: analysis.summary?.averagePlace || 0
       },
       insights: {
-        strengths: analysis.insights.strengths,
-        improvements: analysis.insights.improvements,
-        recommendations: analysis.insights.recommendations
+        strengths: analysis.insights?.strengths || [],
+        improvements: analysis.insights?.improvements || [],
+        recommendations: analysis.insights?.recommendations || []
       },
-      eventDistribution: analysis.eventDistribution,
+      eventDistribution: analysis.eventDistribution || {},
       userSession: {
         userId,
-        swimmerName: analysis.swimmer.name
+        swimmerName: analysis.swimmer?.name || 'Unknown Swimmer'
       }
     };
 
@@ -261,4 +298,4 @@ export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeRe
       { status: 500 }
     );
   }
-} 
+}
