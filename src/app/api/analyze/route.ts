@@ -77,7 +77,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeRe
           ageGroupImprovements: Object.fromEntries(
             Object.entries(sampleData.meetBreakdown.ageGroupImprovements).map(([ageGroup, improvements]) => [
               ageGroup,
-              improvements.map(imp => ({
+              (improvements as any[]).map(imp => ({
                 event: imp.event,
                 improvement: imp.improvement,
                 rank: imp.rank
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeRe
           byAgeGroup: Object.fromEntries(
             Object.entries(sampleData.personalBests.byAgeGroup).map(([ageGroup, bestTimes]) => [
               ageGroup,
-              bestTimes.map(bt => ({
+              (bestTimes as any[]).map(bt => ({
                 event: bt.event,
                 time: bt.time,
                 date: bt.date,
@@ -190,7 +190,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeRe
         ageGroupImprovements: Object.fromEntries(
           Object.entries(analysis.meetBreakdown.ageGroupImprovements).map(([ageGroup, improvements]) => [
             ageGroup,
-            improvements.map(imp => ({
+            (improvements as any[]).map(imp => ({
               event: imp.event,
               improvement: imp.improvement,
               rank: imp.rank
@@ -209,7 +209,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<AnalyzeRe
         byAgeGroup: Object.fromEntries(
           Object.entries(analysis.personalBests.byAgeGroup).map(([ageGroup, bestTimes]) => [
             ageGroup,
-            bestTimes.map(bt => ({
+            (bestTimes as any[]).map(bt => ({
               event: bt.event,
               time: bt.time,
               date: bt.date,
